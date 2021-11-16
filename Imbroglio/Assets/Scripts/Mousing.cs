@@ -33,7 +33,7 @@ public class Mousing : MonoBehaviour
 
         //Tilt camera on X axis (Up/Down)
         tilt = Input.GetAxis("Mouse Y");
-        looks = (3.14159f * transform.localEulerAngles.x / 60);
+        looks = (pi * transform.localEulerAngles.x / 60);
 
         //Prevent looking too high/low
         if (transform.localEulerAngles.x - tilt > 30 && transform.localEulerAngles.x - tilt < 180) {
