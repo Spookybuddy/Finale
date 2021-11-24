@@ -20,12 +20,14 @@ public class StartingArea : MonoBehaviour
         caveSystem = GameObject.Find("Cave Ground").GetComponent<TerrainCode>();
 
         height = caveSystem.height;
-        perlinOffX = caveSystem.ranX;
-        perlinOffY = caveSystem.ranY;
+        transform.position = new Vector3(-1, 0.01f, -depth / 2);
 
         Terrain enter = GetComponent<Terrain>();
         enter.terrainData.heightmapResolution = width;
         enter.terrainData.size = new Vector3(width, height, depth);
+
+        perlinOffX = Random.Range(0f, 100f);
+        perlinOffY = Random.Range(0f, 100f);
 
         //Generate walls and trees for starting area
         float[,] test = new float[width, depth];
@@ -35,8 +37,6 @@ public class StartingArea : MonoBehaviour
             }
         }
         enter.terrainData.SetHeights(0, 0, test);
-
-        transform.position = new Vector3(transform.position.x, 0, -depth/2);
     }
 
     private float borderGen(int x, int y)
@@ -47,7 +47,6 @@ public class StartingArea : MonoBehaviour
 
         //Trees get thicker towards the edges
         if (y > depth/2) {
-            //Use perlin, the x, and the y values to make a random forest
             if (perlin/10 + ((float)y)/64 + Mathf.Clamp(Mathf.Abs(x - 63.5f)/10 - 5.35f, -0.75f, 1.5f) > 0.95f && Random.Range(0, 20) == 0) {
                 fillForest(perlin, x, y, false);
             }
@@ -63,9 +62,8 @@ public class StartingArea : MonoBehaviour
 
         //Left & right walls
         if ((x < 16 || x > width - 17) && y < depth/2) {
-            value = Mathf.Clamp01(Mathf.Round(perlin + 2/(y+1) - 0.1f + Mathf.Clamp(Mathf.Abs(x - 63.5f)/10 - 5.35f, -0.75f, 1.5f)));
+            value = Mathf.Clamp01(Mathf.Round(perlin/2 + ((-y/48.0f) + 0.6f) + Mathf.Clamp(Mathf.Abs(x - 63.5f)/10 - 5.35f, -0.5f, 1.5f)));
         } 
-
         return value;
     }
 
@@ -87,6 +85,5 @@ public class StartingArea : MonoBehaviour
             GameObject sapling = Instantiate(tree[Random.Range(0, tree.Count)], new Vector3(y - 1, 0, (float)x - 63.5f), rotated) as GameObject;
             sapling.transform.parent = GameObject.Find("Forest").transform;
         }
-        
     }
 }

@@ -12,15 +12,17 @@ public class TerrainCode : MonoBehaviour
 
     private float scale = 15.0f;
 
+    private bool entranceMade;
+
     void Start()
     {
+        entranceMade = false;
         CaveGen();
     }
 
     void Update()
     {
-        //EDITOR >>> Change cave layout
-        if (Input.GetKeyDown(KeyCode.X)) {
+        if (!entranceMade) {
             CaveGen();
         }
     }
@@ -36,24 +38,38 @@ public class TerrainCode : MonoBehaviour
         cave.terrainData.size = new Vector3(width, height, depth);
         cave.terrainData.SetHeights(0, 0, HeightGeneration());
 
-        /*Find heights around entrance
-        float[,] test = new float[width, depth];
+        //Pick a random area for a hole
+        float[,] hole = new float[width, depth];
+        Vector2 openingLeft = new Vector2(Random.Range(207, 244), 0);
+        openingLeft.y = openingLeft.x + 12;
+
+        Vector2 openingRight= new Vector2(Random.Range(256, 293), 0);
+        openingRight.y = openingRight.x + 12;
+
+        //Carve a hole into the wall for an entrance
+        float avg = 0;
         for (int a = 0; a < width; a++) {
             for (int b = 0; b < depth; b++) {
-                if (a > 192 && a < 320 && b > depth - depth/64) {
-                    float perlin = Mathf.PerlinNoise((float)a / width * scale + ranX, (float)b / depth * scale + ranY);
-                    test[a, b] = formula(perlin, a, b);
-                } else {
-                    test[a, b] = cave.terrainData.GetHeight(a, b);
+                hole[a, b] = cave.terrainData.GetHeight(a, b);
+                //Find average of area to determine if it is a good spot
+                if ((a == openingLeft.x +1 || a == openingRight.x + 1) && b == 493) {
+                    avg = 0;
+                    for (int c = 0; c < 12; c++) {
+                        for (int d = 0; d < 16; d++) {
+                            avg += cave.terrainData.GetHeight(a + c, b + d);
+                        }
+                    }
+                    Debug.Log(avg);
+                }
+                if (((a > openingLeft.x && a < openingLeft.y) || (a > openingRight.x && a < openingRight.y)) && (b > 492) && avg < 1000) {
+                    hole[a, b] = 0.0f;
+                    entranceMade = true;
                 }
             }
         }
 
         //Clear out section at entrance
-        cave.terrainData.SetHeights(0, 0, test);
-        */
-
-        //coloring(cave);
+        cave.terrainData.SetHeights(0, 0, hole);
     }
 
     //Fill a double array with the heights
@@ -71,7 +87,7 @@ public class TerrainCode : MonoBehaviour
     //Maths to make cave generation better
     private float SomeMaths(int x, int y)
     {
-        float perlin = Mathf.PerlinNoise((float)x / width * scale + ranX, (float)y / depth * scale + ranY);
+        float perlin = Mathf.PerlinNoise((float)x/width * scale + ranX, (float)y/depth * scale + ranY);
 
         //Base rounding of ground to floor
         float deposit = Mathf.Clamp01(Mathf.Round(perlin - 0.05f));
@@ -90,14 +106,6 @@ public class TerrainCode : MonoBehaviour
                 deposit = formula(perlin, y);
             }
         }
-
-        //Front walls
-        if (y > depth - 7) {
-            if (x < 192 || x > 319) {
-                if (x < 6 || x > width - 7) {
-                }
-            }
-        }
         return deposit;
     }
 
@@ -111,30 +119,5 @@ public class TerrainCode : MonoBehaviour
     private float formula(float perlin, int coord)
     {
         return Mathf.Clamp01(Mathf.Round(perlin + Mathf.Abs(coord - 255.5f) / 10 - 25.05f));
-    }
-
-    //Color mapping????
-    private void coloring(Terrain cave)
-    {
-        //Coloring???
-        float[,,] colormap = new float[cave.terrainData.alphamapWidth, cave.terrainData.alphamapHeight, cave.terrainData.alphamapLayers];
-
-        for (int x = 0; x < cave.terrainData.alphamapWidth; x++) {
-            for (int y = 0; y < cave.terrainData.alphamapHeight; y++) {
-                float tall = cave.terrainData.GetHeight(x, y);
-                Vector3 splat = Vector3.up;
-                if (tall >= 0.5f) {
-                    splat = Vector3.Lerp(splat, Vector3.right, (tall - 0.5f) * 2);
-                } else {
-                    splat = Vector3.Lerp(splat, Vector3.forward, tall * 2);
-                }
-                // now assign the values to the correct location in the array
-                splat.Normalize();
-                colormap[x, y, 0] = splat.x;
-                colormap[x, y, 1] = splat.y;
-                colormap[x, y, 2] = splat.z;
-            }
-        }
-        cave.terrainData.SetAlphamaps(0, 0, colormap);
     }
 }
