@@ -5,26 +5,31 @@ using UnityEngine;
 public class Mousing : MonoBehaviour
 {
     private float tilt;
-    private float pi = 3.14159f;
-    private bool flipping;
-    private Movit script;
 
+    private Movit script;
     public GameObject player;
+
     public Light lamp;
+    private bool flipping;
 
     public float looks;
+
+    public float flashBat;
+    public float flashMax;
 
     void Start()
     {
         //Hide mouse (Unhide when paused/menu)
         Cursor.visible = false;
+        flashMax = 50.0f;
+        flashBat = flashMax;
         script = GameObject.Find("Player").GetComponent<Movit>();
     }
 
     void Update()
     {
         //Use a sin wave to add camera bob
-        float playY = 1.75f + (Mathf.Sin(script.stepping * pi) / 8);
+        float playY = 1.75f + (Mathf.Sin(script.stepping * Mathf.PI) / 8);
 
         //Get player position
         float playX = transform.position.x;
@@ -33,7 +38,7 @@ public class Mousing : MonoBehaviour
 
         //Tilt camera on X axis (Up/Down)
         tilt = Input.GetAxis("Mouse Y");
-        looks = (pi * transform.localEulerAngles.x / 60);
+        looks = (Mathf.PI * transform.localEulerAngles.x / 60);
 
         //Prevent looking too high/low
         if (transform.localEulerAngles.x - tilt > 30 && transform.localEulerAngles.x - tilt < 180) {
@@ -45,14 +50,19 @@ public class Mousing : MonoBehaviour
         }
 
         //Flashlight
-        if (Input.GetKeyDown(KeyCode.E) && !flipping) {
+        if (Input.GetKeyDown(KeyCode.Mouse0) && !flipping) {
             flipping = true;
             lamp.gameObject.SetActive(!lamp.gameObject.activeSelf);
             StartCoroutine(flash());
         }
 
-        //Flashlight intensity decreases when looking down to reduce over saturation
-        lamp.intensity = 2 - Mathf.Sin(looks);
+        //Drain flashlight battery
+        if (lamp.gameObject.activeSelf && flashBat > 0) {
+            flashBat = flashBat - Time.deltaTime/flashMax;
+        }
+
+        //Brightness decreases with battery
+        lamp.intensity = 2*flashBat/flashMax;
     }
 
     //Flashlight on/off delay

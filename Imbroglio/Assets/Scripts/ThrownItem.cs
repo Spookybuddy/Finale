@@ -7,11 +7,13 @@ public class ThrownItem : MonoBehaviour
     private Rigidbody physics;
     private Mousing looking;
     private GameObject playerPos;
-    //private GameObject tremorPos;
-    //private GameObject luminePos;
+    private GameObject tremorPos;
 
     private AudioSource sound;
     public AudioClip hitSound;
+
+    public bool breakable;
+    public List<GameObject> shatterPieces;
 
     void Start()
     {
@@ -20,24 +22,31 @@ public class ThrownItem : MonoBehaviour
         sound = GetComponent<AudioSource>();
         looking = GameObject.Find("Main Camera").GetComponent<Mousing>();
         playerPos = GameObject.Find("Player");
-        //tremorPos = GameObject.Find("Tremor");
-        //luminePos = GameObject.Find("Lumine");
+        tremorPos = GameObject.Find("Periscope");
+
+        //If the player position is within range at start, that means the item was thrown
+        if (playerPos.transform.position.x - transform.position.x < 3) {
+            thrown();
+        }
+    }
+
+    //Thrown code
+    private void thrown()
+    {
+        //Find the fastest velocity of the player to affect throw speed
+        float boost = Mathf.Max(Mathf.Abs(playerPos.GetComponent<Rigidbody>().velocity.x)/8 + 1, Mathf.Abs(playerPos.GetComponent<Rigidbody>().velocity.z)/8 + 1, 1);
 
         //Add force in direction camera is looking & forward force
         physics.AddRelativeForce(Vector3.up * -5 * Mathf.Sin(looking.looks), ForceMode.Impulse);
-        physics.AddRelativeForce(Vector3.forward * 15, ForceMode.Impulse);
+        physics.AddRelativeForce(Vector3.forward * 15 * boost, ForceMode.Impulse);
 
         //Add some spin
         physics.AddRelativeTorque(Vector3.right * Random.Range(0.25f, 0.75f), ForceMode.Impulse);
-
-        //Destroy if object hasn't been destroyed after 3sec (Covers clipping out)
-        StartCoroutine(deathFailsafe());
     }
 
     private void noise()
     {
-        //TEMP: Playsound volume based on distance to player and monster
-        //distanceCalc(tremorPos);
+        //TEMP: Playsound volume based on distance to player
         //sound.PlayOneShot(hitSound, Mathf.Min(1, 2/distanceCalc(playerPos)));
     }
 
@@ -51,20 +60,37 @@ public class ThrownItem : MonoBehaviour
         return distance;
     }
 
-    //Destroy after hitting something
-    void OnCollisionExit()
+    //Broadcast location on collision
+    void OnCollisionEnter()
     {
-        //OnCollisionExit because it looks better (Bounces off, instead of vanishing)
-        Debug.Log("Distance: " + distanceCalc(playerPos));
-        Debug.Log("Volume: " + Mathf.Min(1, 2 / distanceCalc(playerPos)));
-        //Particle here
+        //Tell monster to search for sound at location
+        MonsterMash tremor = tremorPos.GetComponent<MonsterMash>();
+        tremor.searching = true;
+        tremor.goTowards = transform.position;
+
         //noise();
-        Destroy(gameObject);
+
+        //Spawn some fragments because I hate the particle system in Unity
+        if (breakable) {
+            for (int a = 0; a < 7; a++) {
+                Instantiate(shatterPieces[Random.Range(0, shatterPieces.Count)], transform.position, transform.rotation);
+            }
+            StartCoroutine(failsafe());
+        }
     }
 
-    IEnumerator deathFailsafe()
+    //OnCollisionExit because it looks better (Bounces off, instead of vanishing)
+    void OnCollisionExit()
     {
-        yield return new WaitForSeconds(3.0f);
+        if (breakable) {
+            Destroy(gameObject);
+        }
+    }
+
+    //Destroy breakables failsafe
+    IEnumerator failsafe()
+    {
+        yield return new WaitForSeconds(0.8f);
         Destroy(gameObject);
     }
 }

@@ -13,19 +13,21 @@ public class Movit : MonoBehaviour
     private float veloCap;
     private float bobby;
 
-    private bool kickIt;
-
     public List<GameObject> inventory;
+    public GameObject bottlePrefab;
+    public GameObject rockPrefab;
     private bool yeetIt;
-    private float pi = 3.14159f;
+
     private Mousing lookingAt;
+
+    public float playerSoundLevel;
 
     void Start()
     {
         lookingAt = GameObject.Find("Main Camera").GetComponent<Mousing>();
         rigid = GetComponent<Rigidbody>();
-        kickIt = true;
         yeetIt = true;
+        playerSoundLevel = 0;
     }
 
     void Update()
@@ -44,7 +46,7 @@ public class Movit : MonoBehaviour
 
         //Velocity cap
         rigid.angularVelocity = Vector3.zero;
-        rigid.velocity = new Vector3(Mathf.Max(Mathf.Min(rigid.velocity.x, veloCap), -veloCap), 0, Mathf.Max(Mathf.Min(rigid.velocity.z, veloCap), -veloCap));
+        rigid.velocity = new Vector3(Mathf.Clamp(rigid.velocity.x, -veloCap, veloCap), 0, Mathf.Clamp(rigid.velocity.z, -veloCap, veloCap));
 
         //Sneak -> Sprint -> Walk >>> CHANGE TO INPUT MANAGER
         if (Input.GetKey(KeyCode.LeftShift)) {
@@ -61,33 +63,40 @@ public class Movit : MonoBehaviour
         //Camera bob wave based on speed
         if (advance != 0 || strafe != 0) {
             stepping = stepping + (1/(100/bobby));
+            playerSoundLevel = Mathf.Max(playerSoundLevel, 2*bobby);
         }
 
-        //Kick attack >>> CHANGE TO INPUT MANAGER
-        if (Input.GetKeyDown(KeyCode.R) && kickIt) {
-            kickIt = false;
-            StartCoroutine(kickReset());
-        }
-
-        //Throw item >>> CHANGE TO INPUT MANAGER
-        if (Input.GetKeyDown(KeyCode.Q) && yeetIt && inventory.Count > 0) {
+        //Throw item
+        if ((Input.GetKeyDown(KeyCode.Q) || Input.GetAxis("Throw") > 0) && yeetIt && inventory.Count > 0) {
             yeetIt = false;
             StartCoroutine(yeetDelay());
 
             //Spawn item based on direction looking both horizontal & vertical
-            float waves = (pi * transform.eulerAngles.y / 180);
-            Instantiate(inventory[0], transform.position + new Vector3(1.3f * Mathf.Sin(waves), -Mathf.Sin(lookingAt.looks), 1.3f * Mathf.Cos(waves)), transform.rotation);
+            float waves = (Mathf.PI * transform.eulerAngles.y / 180);
+            Vector3 spawnAt = new Vector3(1.3f * Mathf.Sin(waves), -Mathf.Sin(lookingAt.looks), 1.3f * Mathf.Cos(waves));
+            Instantiate(inventory[0], transform.position + spawnAt, transform.rotation);
 
             //Remove thrown item from inventory
             //inventory.RemoveAt(0);
         }
-    }
 
-    //Kick reset delay
-    IEnumerator kickReset()
-    {
-        yield return new WaitForSeconds(0.8f);
-        kickIt = true;
+        //Interact with environment (Pick up item / Talk to NPC)
+        if (Input.GetKeyDown(KeyCode.E) || Input.GetAxis("Interact") > 0) {
+            GameObject[] throwables = GameObject.FindGameObjectsWithTag("Throwable");
+            foreach (GameObject item in throwables) {
+                //Find distance to player and pickup if within reach
+                float dist = Mathf.Sqrt(Mathf.Pow(transform.position.x - item.transform.position.x, 2) + Mathf.Pow(transform.position.z - item.transform.position.z, 2));
+                if (dist < 2) {
+                    //Add the prefab for the respective item (Because you can't just add the item and then destroy it, so this is my workaround)
+                    if (item.name == "Rock(Clone)") {
+                        inventory.Add(rockPrefab);
+                    } else if (item.name == "bottle(Clone)") {
+                        inventory.Add(bottlePrefab);
+                    }
+                    Destroy(item);
+                }
+            }
+        }
     }
 
     //Throw reset delay

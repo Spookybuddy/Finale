@@ -4,9 +4,7 @@
 TagManager:
   serializedVersion: 2
   tags:
-  - Inactive
-  - Active
-  - Emptied
+  - Throwable
   layers:
   - Default
   - TransparentFX
