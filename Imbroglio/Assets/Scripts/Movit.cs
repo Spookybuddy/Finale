@@ -63,7 +63,9 @@ public class Movit : MonoBehaviour
         //Camera bob wave based on speed
         if (advance != 0 || strafe != 0) {
             stepping = stepping + (1/(100/bobby));
-            playerSoundLevel = Mathf.Max(playerSoundLevel, 2*bobby);
+            playerSoundLevel = Mathf.Max(playerSoundLevel, 2*bobby/3);
+        } else {
+            playerSoundLevel = Mathf.Max(playerSoundLevel - 3*Time.deltaTime, 0);
         }
 
         //Throw item
@@ -77,7 +79,7 @@ public class Movit : MonoBehaviour
             Instantiate(inventory[0], transform.position + spawnAt, transform.rotation);
 
             //Remove thrown item from inventory
-            //inventory.RemoveAt(0);
+            inventory.RemoveAt(0);
         }
 
         //Interact with environment (Pick up item / Talk to NPC)

@@ -13,6 +13,7 @@ public class ThrownItem : MonoBehaviour
     public AudioClip hitSound;
 
     public bool breakable;
+    public bool spawnedIn;
     public List<GameObject> shatterPieces;
 
     void Start()
@@ -25,8 +26,16 @@ public class ThrownItem : MonoBehaviour
         tremorPos = GameObject.Find("Periscope");
 
         //If the player position is within range at start, that means the item was thrown
-        if (playerPos.transform.position.x - transform.position.x < 3) {
+        if (Mathf.Abs(playerPos.transform.position.x - transform.position.x) < 3 && Mathf.Abs(playerPos.transform.position.z - transform.position.z) < 3) {
+            spawnedIn = false;
             thrown();
+        }
+    }
+
+    void Update()
+    {
+        if (transform.position.y < -2) {
+            Destroy(gameObject);
         }
     }
 
@@ -63,26 +72,36 @@ public class ThrownItem : MonoBehaviour
     //Broadcast location on collision
     void OnCollisionEnter()
     {
-        //Tell monster to search for sound at location
-        MonsterMash tremor = tremorPos.GetComponent<MonsterMash>();
-        tremor.searching = true;
-        tremor.goTowards = transform.position;
+        if (!spawnedIn) {
+            //Breakables do damage if monster ate it
+            //Monster takes more damage when hit outside by non-breakables
 
-        //noise();
+            //Check if it hit monster
 
-        //Spawn some fragments because I hate the particle system in Unity
-        if (breakable) {
-            for (int a = 0; a < 7; a++) {
-                Instantiate(shatterPieces[Random.Range(0, shatterPieces.Count)], transform.position, transform.rotation);
+            //Destroy if monster ate it
+
+            //Tell monster to search for sound at location
+            MonsterMash tremor = tremorPos.GetComponent<MonsterMash>();
+            tremor.itemHit = true;
+            tremor.itemDistance = Mathf.Min(2, 16 / distanceCalc(tremorPos));
+            tremor.goTowards = transform.position;
+
+            //noise();
+
+            //Spawn some fragments because I hate the particle system in Unity
+            if (breakable) {
+                for (int a = 0; a < 7; a++) {
+                    Instantiate(shatterPieces[Random.Range(0, shatterPieces.Count)], transform.position, transform.rotation);
+                }
+                StartCoroutine(failsafe());
             }
-            StartCoroutine(failsafe());
         }
     }
 
     //OnCollisionExit because it looks better (Bounces off, instead of vanishing)
     void OnCollisionExit()
     {
-        if (breakable) {
+        if (breakable && !spawnedIn) {
             Destroy(gameObject);
         }
     }

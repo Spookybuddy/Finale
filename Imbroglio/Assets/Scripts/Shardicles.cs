@@ -11,7 +11,7 @@ public class Shardicles : MonoBehaviour
     {
         rigid = GetComponent<Rigidbody>();
         rigid.AddForce(new Vector3(Random.Range(-2.0f, 2.0f), Random.Range(-0.5f, 1.5f), Random.Range(-2.0f, 2.0f)), ForceMode.Impulse);
-        rigid.AddTorque(new Vector3(Random.Range(-1.0f, 1.0f), Random.Range(-0.5f, 0.5f), Random.Range(-1.0f, 1.0f)), ForceMode.Impulse);
+        rigid.AddTorque(new Vector3(Random.Range(-2.0f, 2.0f), Random.Range(-0.5f, 0.5f), Random.Range(-2.0f, 2.0f)), ForceMode.Impulse);
         StartCoroutine(delete());
     }
 
