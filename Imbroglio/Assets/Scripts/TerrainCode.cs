@@ -12,20 +12,27 @@ public class TerrainCode : MonoBehaviour
 
     private float scale = 15.0f;
 
-    private bool entranceMade;
+    private bool leftMade;
+    private bool rightMade;
 
     public Vector2 leftOpening;
     public Vector2 rightOpening;
+    public GameObject lantern;
 
     void Start()
     {
-        entranceMade = false;
+        leftMade = false;
+        rightMade = false;
         CaveGen();
     }
 
     void Update()
     {
-        if (!entranceMade) {
+        if (!leftMade || !rightMade) {
+            GameObject[] limitLamps = GameObject.FindGameObjectsWithTag("Lamp");
+            foreach (GameObject light in limitLamps) {
+                Destroy(light);
+            }
             CaveGen();
         }
     }
@@ -63,15 +70,27 @@ public class TerrainCode : MonoBehaviour
                         }
                     }
                 }
-                if (((a > leftOpening.x && a < leftOpening.y) || (a > rightOpening.x && a < rightOpening.y)) && (b > 492) && avg < 1000) {
+                if ((a > leftOpening.x && a < leftOpening.y) && (b > 492) && avg < 1000) {
                     hole[a, b] = 0.0f;
-                    entranceMade = true;
+                    leftMade = true;
+                }
+                if ((a > rightOpening.x && a < rightOpening.y) && (b > 492) && avg < 1000) {
+                    hole[a, b] = 0.0f;
+                    rightMade = true;
                 }
             }
         }
 
-        //Clear out section at entrance
+        //Clear out section at entrance and spawn lanterns at entrances made
         cave.SetHeights(0, 0, hole);
+        if (leftMade) {
+            Instantiate(lantern, new Vector3(0.3f, 5, leftOpening.x - 257), transform.rotation);
+            Instantiate(lantern, new Vector3(0.3f, 5, leftOpening.x - 243), transform.rotation);
+        }
+        if (rightMade) {
+            Instantiate(lantern, new Vector3(0.3f, 5, rightOpening.x - 257), transform.rotation);
+            Instantiate(lantern, new Vector3(0.3f, 5, rightOpening.x - 243), transform.rotation);
+        }
 
         //Paint the cave
         cave.SetAlphamaps(0, 0, PaintGen(cave));

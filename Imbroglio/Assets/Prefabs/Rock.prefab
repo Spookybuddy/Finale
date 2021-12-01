@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 8801620289339208801}
   - component: {fileID: 2276173976008112591}
   - component: {fileID: 1388208444886610676}
+  - component: {fileID: -2140576394475312247}
   m_Layer: 0
   m_Name: Rock
   m_TagString: Throwable
@@ -28,7 +29,7 @@ Transform:
   m_GameObject: {fileID: 3977923122032662954}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_Children:
   - {fileID: 9142957415989500242}
   - {fileID: 2264542231261570946}
@@ -50,15 +51,15 @@ LODGroup:
   m_AnimateCrossFading: 0
   m_LastLODIsBillboard: 0
   m_LODs:
-  - screenRelativeHeight: 0.698462
+  - screenRelativeHeight: 0.40404266
     fadeTransitionWidth: 0
     renderers:
     - renderer: {fileID: 4054415661810186715}
-  - screenRelativeHeight: 0.40251574
+  - screenRelativeHeight: 0.14525908
     fadeTransitionWidth: 0
     renderers:
     - renderer: {fileID: 5052226092198026770}
-  - screenRelativeHeight: 0.19659941
+  - screenRelativeHeight: 0.05192005
     fadeTransitionWidth: 0
     renderers:
     - renderer: {fileID: 3523186858826749388}
@@ -92,6 +93,22 @@ MonoBehaviour:
   breakable: 0
   spawnedIn: 0
   shatterPieces: []
+--- !u!54 &-2140576394475312247
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3977923122032662954}
+  serializedVersion: 2
+  m_Mass: 2
+  m_Drag: 0
+  m_AngularDrag: 0.05
+  m_UseGravity: 1
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
 --- !u!1 &5496286586546988396
 GameObject:
   m_ObjectHideFlags: 0

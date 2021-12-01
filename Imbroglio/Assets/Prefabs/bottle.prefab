@@ -255,6 +255,7 @@ GameObject:
   - component: {fileID: 1403385657320255464}
   - component: {fileID: 3028594740687755442}
   - component: {fileID: -1981423763839353317}
+  - component: {fileID: 5464117301611548317}
   m_Layer: 0
   m_Name: Bottle
   m_TagString: Throwable
@@ -271,7 +272,7 @@ Transform:
   m_GameObject: {fileID: 6802718934573072931}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.2, y: 0.2, z: 0.2}
+  m_LocalScale: {x: 0.1, y: 0.1, z: 0.1}
   m_Children:
   - {fileID: 6727724021034465426}
   - {fileID: 6236069487813815266}
@@ -294,19 +295,19 @@ LODGroup:
   m_AnimateCrossFading: 0
   m_LastLODIsBillboard: 0
   m_LODs:
-  - screenRelativeHeight: 0.80053407
+  - screenRelativeHeight: 0.74726266
     fadeTransitionWidth: 0
     renderers:
     - renderer: {fileID: 4767119383073732695}
-  - screenRelativeHeight: 0.6033392
+  - screenRelativeHeight: 0.49654704
     fadeTransitionWidth: 0
     renderers:
     - renderer: {fileID: 7696404976304954793}
-  - screenRelativeHeight: 0.40251574
+  - screenRelativeHeight: 0.25118187
     fadeTransitionWidth: 0
     renderers:
     - renderer: {fileID: 8462026260464086474}
-  - screenRelativeHeight: 0.19659941
+  - screenRelativeHeight: 0.04545309
     fadeTransitionWidth: 0
     renderers:
     - renderer: {fileID: 732247918607211419}
@@ -343,6 +344,22 @@ MonoBehaviour:
   - {fileID: 2150908615667534608, guid: efc544fb88926f94e984cdb14a52f9ec, type: 3}
   - {fileID: 7748699379642172542, guid: 9bad98a7fb8cf3b43876b201d7672d4a, type: 3}
   - {fileID: 9104253750444998347, guid: fcf068662f851644886df09dbd894d4f, type: 3}
+--- !u!54 &5464117301611548317
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6802718934573072931}
+  serializedVersion: 2
+  m_Mass: 1
+  m_Drag: 0
+  m_AngularDrag: 0.05
+  m_UseGravity: 1
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
 --- !u!1 &8433159569740180960
 GameObject:
   m_ObjectHideFlags: 0

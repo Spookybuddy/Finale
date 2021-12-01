@@ -92,7 +92,7 @@ public class Movit : MonoBehaviour
                     //Add the prefab for the respective item (Because you can't just add the item and then destroy it, so this is my workaround)
                     if (item.name == "Rock(Clone)") {
                         inventory.Add(rockPrefab);
-                    } else if (item.name == "bottle(Clone)") {
+                    } else if (item.name == "Bottle(Clone)") {
                         inventory.Add(bottlePrefab);
                     }
                     Destroy(item);
