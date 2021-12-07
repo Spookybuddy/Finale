@@ -9,6 +9,7 @@ public class TerrainCode : MonoBehaviour
 
     private float ranX;
     private float ranY;
+    private float perlin;
 
     private float scale = 15.0f;
 
@@ -28,6 +29,7 @@ public class TerrainCode : MonoBehaviour
 
     void Update()
     {
+        //If no entrance has been made, try again, destroying any lanterns spawned
         if (!leftMade || !rightMade) {
             GameObject[] limitLamps = GameObject.FindGameObjectsWithTag("Lamp");
             foreach (GameObject light in limitLamps) {
@@ -84,12 +86,16 @@ public class TerrainCode : MonoBehaviour
         //Clear out section at entrance and spawn lanterns at entrances made
         cave.SetHeights(0, 0, hole);
         if (leftMade) {
-            Instantiate(lantern, new Vector3(0.3f, 5, leftOpening.x - 257), transform.rotation);
-            Instantiate(lantern, new Vector3(0.3f, 5, leftOpening.x - 243), transform.rotation);
+            spawnLamps(leftOpening.x - 257);
+            spawnLamps(leftOpening.x - 243);
         }
         if (rightMade) {
-            Instantiate(lantern, new Vector3(0.3f, 5, rightOpening.x - 257), transform.rotation);
-            Instantiate(lantern, new Vector3(0.3f, 5, rightOpening.x - 243), transform.rotation);
+            spawnLamps(rightOpening.x - 257);
+            spawnLamps(rightOpening.x - 243);
+        }
+        if  (leftMade || rightMade) {
+            leftMade = true;
+            rightMade = true;
         }
 
         //Paint the cave
@@ -102,7 +108,7 @@ public class TerrainCode : MonoBehaviour
         float[,] heights = new float[width, depth];
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < depth; j++) {
-                heights[i, j] = SomeMaths(i, j);
+                heights[i, j] = Mathf.Clamp01(Mathf.Round(Maths(i, j)));
             }
         }
         return heights;
@@ -115,55 +121,59 @@ public class TerrainCode : MonoBehaviour
         for (int p = 0; p < cave.alphamapWidth; p++) {
             for (int q = 0; q < cave.alphamapHeight; q++) {
                 for (int r = 0; r < cave.alphamapLayers; r++) {
-                    splatter[p, q, r] = SomePaints(q, p, r);
+                    splatter[p, q, r] = Paints(q, p, r);
                 }
             }
         }
         return splatter;
     }
 
-    //Maths to make cave generation better
-    private float SomeMaths(int x, int y)
+    //Wall formula
+    private float Maths(int x, int y)
     {
-        float perlin = Mathf.PerlinNoise((float)x/width * scale + ranX, (float)y/depth * scale + ranY);
-
-        //Base rounding of ground to floor
-        float deposit = Mathf.Clamp01(Mathf.Round(perlin - 0.05f));
+        perlin = Mathf.PerlinNoise((float)x/width * scale + ranX, (float)y/depth * scale + ranY);
+        float deliverable = perlin - 0.05f;
 
         //Left & right walls
         if (x < 6 || x > width - 7) {
-            deposit = formula(perlin, x);
+            deliverable = formula(x);
         }
 
         //Back & front walls
         if (y < 6 || y > depth - 7) {
             //Overlaping walls take larger values
             if (x < 6 || x > width - 7) {
-                deposit = Mathf.Max(formula(perlin, x), formula(perlin, y));
+                deliverable = Mathf.Max(formula(x), formula(y));
             } else {
-                deposit = formula(perlin, y);
+                deliverable = formula(y);
             }
         }
-        return deposit;
-    }
-
-    //Formula for cave height gen
-    private float formula(float perlin, int coord)
-    {
-        return Mathf.Clamp01(Mathf.Round(perlin + Mathf.Abs(coord - 255.5f)/10 - 25.05f));
+        return deliverable;
     }
 
     //Maths to make the painting
-    private float SomePaints(int x, int y, int z)
+    private float Paints(int x, int y, int z)
     {
-        float perlin = Mathf.PerlinNoise((float)x/width * scale + ranX, (float)y/depth * scale + ranY);
         float alpha = 1.0f;
 
         if (z == 0) {
-            alpha = Mathf.Clamp01(perlin);
+            alpha = 1.0f - Maths(x, y);
         } else {
-            alpha = Mathf.Clamp01(1.0f - perlin);
+            alpha = perlin;
         }
         return alpha;
+    }
+
+    //Formula for cave height gen
+    private float formula(int coord)
+    {
+        return perlin + Mathf.Abs(coord - 255.5f)/10f - 25f;
+    }
+
+    //Spawn lanterns as children
+    private void spawnLamps(float z)
+    {
+        GameObject light = Instantiate(lantern, new Vector3(0, 5, z), transform.rotation) as GameObject;
+        light.transform.parent = GameObject.Find("Cave Ground").transform;
     }
 }

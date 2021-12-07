@@ -59,7 +59,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 36aa6653e0e8fa046920a275b66b3266, type: 2}
+  - {fileID: 2100000, guid: c7a1e9a53b7aa8d48ab0121d0fde9b76, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -140,7 +140,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 36aa6653e0e8fa046920a275b66b3266, type: 2}
+  - {fileID: 2100000, guid: c7a1e9a53b7aa8d48ab0121d0fde9b76, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -187,8 +187,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6978917849803229104}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.3, y: 4, z: 0}
-  m_LocalScale: {x: 0.7, y: 0.7, z: 0.7}
+  m_LocalPosition: {x: 0, y: 4, z: 0}
+  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_Children:
   - {fileID: 1943805599890538139}
   - {fileID: 3431410754696208403}
@@ -210,11 +210,11 @@ LODGroup:
   m_AnimateCrossFading: 0
   m_LastLODIsBillboard: 0
   m_LODs:
-  - screenRelativeHeight: 0.1503545
+  - screenRelativeHeight: 0.121347666
     fadeTransitionWidth: 0
     renderers:
     - renderer: {fileID: 5539933172667996836}
-  - screenRelativeHeight: 0.04551474
+  - screenRelativeHeight: 0.057046738
     fadeTransitionWidth: 0
     renderers:
     - renderer: {fileID: 7902644426142807167}
@@ -230,7 +230,7 @@ GameObject:
   - component: {fileID: 7789944360056153063}
   - component: {fileID: 7789944360056153062}
   m_Layer: 0
-  m_Name: Point Light
+  m_Name: Candle Light
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

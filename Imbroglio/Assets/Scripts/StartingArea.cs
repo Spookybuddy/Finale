@@ -55,8 +55,8 @@ public class StartingArea : MonoBehaviour
 
         //Trees get thicker towards the edges
         if (y > depth/2) {
-            //1/33 tree chance
-            if (perlin/10 + ((float)y)/64 + Mathf.Clamp(Mathf.Abs(x - 63.5f)/10 - 5.35f, -0.75f, 1.5f) > 0.95f && Random.Range(0, 33) == 0) {
+            //1/30 tree chance
+            if (perlin/10 + ((float)y)/64 + Mathf.Clamp(Mathf.Abs(x - 63.5f)/10 - 5.35f, -0.75f, 1.5f) > 0.95f && Random.Range(0, 30) == 0) {
                 fillForest(perlin, x, y, false);
             }
             value = 0.0f;
@@ -85,11 +85,10 @@ public class StartingArea : MonoBehaviour
 
         //Assign alpha values based on perlin noise to get a smoother transition
         //Layer 0 = Ground, Layer 1 = Walls
-        //For random tiling, pick random one and give alpha 0 for the others (Not Ground tho)
         if (z == 1) {
-            alpha = Mathf.Clamp01(perlin/2 + ((-y/48.0f) + 0.6f) + Mathf.Clamp(Mathf.Abs(x - 63.5f)/10 - 5.35f, -0.5f, 1.5f));
+            alpha = Mathf.Clamp01(perlin/1.428f + (5/(y+1)) + ((-y/32.0f) + 1f) + (Mathf.Abs(x - 63.5f)/10 - 4.85f));
         } else {
-            alpha = 1.0f - Mathf.Clamp01(perlin/2 + ((-y/48.0f) + 0.6f) + Mathf.Clamp(Mathf.Abs(x - 63.5f)/10 - 5.35f, -0.5f, 1.5f));
+            alpha = 1.0f - Mathf.Clamp01(perlin/1.428f + (5/(y+1)) + ((-y/32.0f) + 1f) + (Mathf.Abs(x - 63.5f)/10 - 4.85f));
         }
         return alpha;
     }

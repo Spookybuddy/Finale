@@ -8,6 +8,7 @@ public class MonsterMash : MonoBehaviour
 
     private GameObject tracking;
     private Movit player;
+    public GameObject worm;
 
     public bool hunting;
     public bool itemHit;
@@ -35,80 +36,92 @@ public class MonsterMash : MonoBehaviour
 
     void Update()
     {
-        //Movement type speeds
-        if (hunting) {
-            spd = 6.0f;
-            goTowards = tracking.transform.position;
-        } else if (searching) {
-            spd = 4.0f;
-        } else {
-            spd = 2.0f;
-        }
-
-        //Calc player sound based on distance
-        if (player.playerSoundLevel > playerThreshold) {
-            float noise = 8/Mathf.Sqrt(Mathf.Pow(transform.position.x - tracking.transform.position.x, 2) + Mathf.Pow(transform.position.z - tracking.transform.position.z, 2));
-            noise = noise * player.playerSoundLevel;
-            if (noise > playerThreshold) {
-                hunting = true;
-                searching = false;
-            } else if (noise < playerThreshold/2) {
-                hunting = false;
-            }
-        }
-
-        //Calc thrown sound based on distance
-        if (itemHit) {
-            if (itemDistance > playerThreshold) {
-                hunting = false;
-                searching = true;
-            } else {
-                itemHit = false;
-            }
-        }
-
-        //When reaching the target position
-        if (Mathf.Abs(goTowards.x - transform.position.x) < 2.5f && Mathf.Abs(goTowards.z - transform.position.z) < 2.5f && !attacking) {
-            goTowards = new Vector3(500, 0, 500);
-            rigid.velocity = Vector3.zero;
-            attackSpot = transform.position;
-            attacking = true;
-            searching = false;
-            hunting = false;
-            itemHit = false;
-        }
-
-        //Attack here
-        if (attacking) {
-            transform.position = attackSpot;
-            StartCoroutine(attackDuration());
-        }
-
-        //Nudge it 
-        while (nudge && !attacking) {
-            float veloX;
-            float veloZ;
-            float delay;
-
+        if (!player.menuUp) {
+            //Movement type speeds
             if (hunting) {
-                veloX = goTowards.x - transform.position.x;
-                veloZ = goTowards.z - transform.position.z;
-                delay = 0.25f;
+                spd = 6.0f;
+                goTowards = tracking.transform.position;
             } else if (searching) {
-                veloX = goTowards.x - transform.position.x;
-                veloZ = goTowards.z - transform.position.z;
-                delay = 0.5f;
+                spd = 4.0f;
             } else {
-                veloX = Random.Range(-6.0f, 6.0f);
-                veloZ = Random.Range(-6.0f, 6.0f);
-                delay = 0.75f;
+                spd = 2.0f;
             }
 
-            rigid.AddForce(new Vector3(veloX, 0, veloZ).normalized * spd, ForceMode.Impulse);
-            rigid.velocity = new Vector3(Mathf.Clamp(rigid.velocity.x, -10, 10), 0, Mathf.Clamp(rigid.velocity.z, -10, 10));
+            //Calc player sound based on distance
+            if (player.playerSoundLevel > playerThreshold) {
+                float noise = 8 / Mathf.Sqrt(Mathf.Pow(transform.position.x - tracking.transform.position.x, 2) + Mathf.Pow(transform.position.z - tracking.transform.position.z, 2));
+                noise = noise * player.playerSoundLevel;
+                if (noise > playerThreshold) {
+                    hunting = true;
+                    searching = false;
+                } else if (noise < playerThreshold / 2) {
+                    hunting = false;
+                }
+            }
 
-            nudge = false;
-            StartCoroutine(waitForce(delay));
+            //Calc thrown sound based on distance
+            if (itemHit) {
+                if (itemDistance > playerThreshold) {
+                    hunting = false;
+                    searching = true;
+                } else {
+                    itemHit = false;
+                }
+            }
+
+            //When reaching the target position
+            if (Mathf.Abs(goTowards.x - transform.position.x) < 2.5f && Mathf.Abs(goTowards.z - transform.position.z) < 2.5f && !attacking) {
+                goTowards = new Vector3(500, 0, 500);
+                rigid.velocity = Vector3.zero;
+                attackSpot = transform.position;
+                attacking = true;
+                searching = false;
+                hunting = false;
+                itemHit = false;
+
+                //Worm bite
+                GameObject[] heads = GameObject.FindGameObjectsWithTag("Worm");
+                foreach (GameObject worm in heads) {
+                    Destroy(worm);
+                }
+                Instantiate(worm, new Vector3(attackSpot.x, -10, attackSpot.z), transform.rotation);
+            }
+
+            //Attack here
+            if (attacking) {
+                transform.position = attackSpot;
+                StartCoroutine(attackDuration());
+            }
+
+            //Nudge it 
+            while (nudge && !attacking) {
+                float veloX;
+                float veloZ;
+                float delay;
+
+                if (hunting) {
+                    veloX = goTowards.x - transform.position.x;
+                    veloZ = goTowards.z - transform.position.z;
+                    delay = 0.25f;
+                } else if (searching) {
+                    veloX = goTowards.x - transform.position.x;
+                    veloZ = goTowards.z - transform.position.z;
+                    delay = 0.5f;
+                } else {
+                    veloX = Random.Range(-6.0f, 6.0f);
+                    veloZ = Random.Range(-6.0f, 6.0f);
+                    delay = 0.75f;
+                }
+
+                rigid.AddForce(new Vector3(veloX, 0, veloZ).normalized * spd, ForceMode.Impulse);
+                rigid.velocity = new Vector3(Mathf.Clamp(rigid.velocity.x, -10, 10), 0, Mathf.Clamp(rigid.velocity.z, -10, 10));
+
+                nudge = false;
+                StartCoroutine(waitForce(delay));
+            }
+        } else {
+            //Lock velocity when paused
+            rigid.velocity = Vector3.zero;
         }
     }
 

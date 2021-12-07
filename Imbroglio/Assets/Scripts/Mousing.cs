@@ -28,41 +28,43 @@ public class Mousing : MonoBehaviour
 
     void Update()
     {
-        //Use a sin wave to add camera bob
-        float playY = 1.75f + (Mathf.Sin(script.stepping * Mathf.PI) / 8);
+        if (!script.menuUp) {
+            //Use a sin wave to add camera bob
+            float playY = 1.75f + (Mathf.Sin(script.stepping * Mathf.PI) / 16);
 
-        //Get player position
-        float playX = transform.position.x;
-        float playZ = transform.position.z;
-        transform.position = new Vector3(playX, playY, playZ);
+            //Get player position
+            float playX = transform.position.x;
+            float playZ = transform.position.z;
+            transform.position = new Vector3(playX, playY, playZ);
 
-        //Tilt camera on X axis (Up/Down)
-        tilt = Input.GetAxis("Mouse Y");
-        looks = (Mathf.PI * transform.localEulerAngles.x / 60);
+            //Tilt camera on X axis (Up/Down)
+            tilt = Input.GetAxis("Mouse Y");
+            looks = (Mathf.PI * transform.localEulerAngles.x / 60);
 
-        //Prevent looking too high/low
-        if (transform.localEulerAngles.x - tilt > 30 && transform.localEulerAngles.x - tilt < 180) {
-            transform.localEulerAngles = new Vector3(30, transform.localEulerAngles.y, 0);
-        } else if (transform.localEulerAngles.x - tilt > 180 && transform.localEulerAngles.x - tilt < 330) {
-            transform.localEulerAngles = new Vector3(330, transform.localEulerAngles.y, 0);
-        } else {
-            transform.localEulerAngles = new Vector3(transform.localEulerAngles.x - tilt, transform.localEulerAngles.y, 0);
+            //Prevent looking too high/low
+            if (transform.localEulerAngles.x - tilt > 30 && transform.localEulerAngles.x - tilt < 180) {
+                transform.localEulerAngles = new Vector3(30, transform.localEulerAngles.y, 0);
+            } else if (transform.localEulerAngles.x - tilt > 180 && transform.localEulerAngles.x - tilt < 330) {
+                transform.localEulerAngles = new Vector3(330, transform.localEulerAngles.y, 0);
+            } else {
+                transform.localEulerAngles = new Vector3(transform.localEulerAngles.x - tilt, transform.localEulerAngles.y, 0);
+            }
+
+            //Flashlight
+            if (Input.GetKeyDown(KeyCode.F) && !flipping) {
+                flipping = true;
+                lamp.gameObject.SetActive(!lamp.gameObject.activeSelf);
+                StartCoroutine(flash());
+            }
+
+            //Drain flashlight battery
+            if (lamp.gameObject.activeSelf && flashBat > 0) {
+                flashBat = flashBat - Time.deltaTime / flashMax * 2.5f;
+            }
+
+            //Brightness decreases with battery
+            lamp.intensity = 2.5f * flashBat / flashMax;
         }
-
-        //Flashlight
-        if (Input.GetKeyDown(KeyCode.Mouse0) && !flipping) {
-            flipping = true;
-            lamp.gameObject.SetActive(!lamp.gameObject.activeSelf);
-            StartCoroutine(flash());
-        }
-
-        //Drain flashlight battery
-        if (lamp.gameObject.activeSelf && flashBat > 0) {
-            flashBat = flashBat - Time.deltaTime/flashMax;
-        }
-
-        //Brightness decreases with battery
-        lamp.intensity = 2*flashBat/flashMax;
     }
 
     //Flashlight on/off delay
