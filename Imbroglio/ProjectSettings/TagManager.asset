@@ -9,6 +9,8 @@ TagManager:
   - Lamp
   - Fog
   - Worm
+  - Saved
+  - NPC
   layers:
   - Default
   - TransparentFX

@@ -122,13 +122,20 @@ public class Movit : MonoBehaviour
             //Interact with environment (Pick up item / Talk to NPC)
             if (Input.GetKeyDown(KeyCode.E) || Input.GetAxis("Interact") > 0) {
                 if (byCar) {
-                    Debug.Log("Deposit NPC");
+                    //Remove all npcs
+                    GameObject[] npcs = GameObject.FindGameObjectsWithTag("Saved");
+                    if (npcs.Length > 0) {
+                        Destroy(npcs[0]);
+                    }
                     byCar = false;
                     StartCoroutine(npcDelay());
 
-                    //Testing victory
-                    victory = true;
-                    menuUp = true;
+                    //Victory if no more NPCs
+                    GameObject[] people = GameObject.FindGameObjectsWithTag("NPC");
+                    if (people.Length == 0) {
+                        victory = true;
+                        menuUp = true;
+                    }
                 }
                 GameObject[] throwables = GameObject.FindGameObjectsWithTag("Throwable");
                 foreach (GameObject item in throwables) {

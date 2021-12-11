@@ -210,11 +210,11 @@ LODGroup:
   m_AnimateCrossFading: 0
   m_LastLODIsBillboard: 0
   m_LODs:
-  - screenRelativeHeight: 0.121347666
+  - screenRelativeHeight: 0.20274284
     fadeTransitionWidth: 0
     renderers:
     - renderer: {fileID: 5539933172667996836}
-  - screenRelativeHeight: 0.057046738
+  - screenRelativeHeight: 0.012820744
     fadeTransitionWidth: 0
     renderers:
     - renderer: {fileID: 7902644426142807167}
@@ -234,7 +234,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 4294967295
   m_IsActive: 1
 --- !u!4 &7789944360056153063
 Transform:
@@ -261,9 +261,9 @@ Light:
   serializedVersion: 10
   m_Type: 2
   m_Shape: 0
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 1
-  m_Range: 10
+  m_Color: {r: 0.9433962, g: 0.90478057, b: 0.51085794, a: 1}
+  m_Intensity: 1.25
+  m_Range: 30
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
@@ -301,7 +301,7 @@ Light:
     serializedVersion: 2
     m_Bits: 4294967295
   m_RenderingLayerMask: 1
-  m_Lightmapping: 4
+  m_Lightmapping: 2
   m_LightShadowCasterMode: 0
   m_AreaSize: {x: 1, y: 1}
   m_BounceIntensity: 1

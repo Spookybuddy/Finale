@@ -81,10 +81,10 @@ public class MonsterMash : MonoBehaviour
 
                 //Worm bite
                 GameObject[] heads = GameObject.FindGameObjectsWithTag("Worm");
-                foreach (GameObject worm in heads) {
-                    Destroy(worm);
+                foreach (GameObject head in heads) {
+                    Destroy(head);
                 }
-                Instantiate(worm, new Vector3(attackSpot.x, -10, attackSpot.z), transform.rotation);
+                Instantiate(worm, new Vector3(attackSpot.x, -12, attackSpot.z), transform.rotation);
             }
 
             //Attack here
@@ -144,7 +144,7 @@ public class MonsterMash : MonoBehaviour
 
     IEnumerator attackDuration()
     {
-        yield return new WaitForSeconds(1);
+        yield return new WaitForSeconds(1.5f);
         attacking = false;
     }
 }
