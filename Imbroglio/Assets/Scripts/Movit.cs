@@ -18,32 +18,49 @@ public class Movit : MonoBehaviour
     public GameObject bottlePrefab;
     public GameObject rockPrefab;
 
+    public GameObject markerPrefab;
+    public int markers;
+
     private bool yeetIt;
-    private bool byCar;
+    private bool placed;
+    public bool byCar;
+    public int numSaved;
+    private bool menuLag;
 
     public bool menuUp;
     public bool paused;
+    public bool confirm;
     public bool victory;
     public bool failure;
     public bool mainMenu;
+    public bool storyMenu;
 
     public bool interactRange;
+    public bool talkingRange;
 
     private Mousing lookingAt;
+    private MonsterMash monster;
 
     public float playerSoundLevel;
 
     void Start()
     {
         lookingAt = GameObject.Find("Main Camera").GetComponent<Mousing>();
+        monster = GameObject.Find("Periscope").GetComponent<MonsterMash>();
         rigid = GetComponent<Rigidbody>();
         yeetIt = true;
+        placed = false;
+        markers = 0;
         menuUp = true;
         mainMenu = true;
+        storyMenu = false;
         paused = false;
+        confirm = false;
+        menuLag = false;
         victory = false;
         failure = false;
-        playerSoundLevel = 0;
+        playerSoundLevel = 0.0f;
+        numSaved = 0;
     }
 
     void Update()
@@ -52,25 +69,52 @@ public class Movit : MonoBehaviour
         if (mainMenu) {
             if (Input.GetKeyDown(KeyCode.Return)) {
                 mainMenu = false;
-                menuUp = false;
-            } else if (Input.GetKeyDown(KeyCode.Escape)) {
+                storyMenu = true;
+            } else if (Input.GetKey(KeyCode.Q) && Input.GetKey(KeyCode.E)) {
                 Debug.Log("Quit");
                 Application.Quit();
+            }
+        } else if (storyMenu) {
+            //Display objective text after beginning
+            if (Input.GetKeyDown(KeyCode.Escape)) {
+                storyMenu = false;
+                menuUp = false;
             }
         } else if (failure || victory) {
             //Escape on failure/victory reloads scene
             if (Input.GetKeyDown(KeyCode.Escape)) {
                 SceneManager.LoadScene(SceneManager.GetActiveScene().name);
             }
+        } else if (confirm) {
+            if (Input.GetKeyDown(KeyCode.Return) && !menuLag) {
+                SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+            }
+            if (Input.GetKeyDown(KeyCode.Escape)) {
+                confirm = false;
+                paused = true;
+                menuUp = true;
+            }
+        } else if (paused) {
+            //Quit to main via Enter with confirmation message
+            if (Input.GetKeyDown(KeyCode.Return)) {
+                menuLag = true;
+                StartCoroutine(menuDelay());
+                paused = false;
+                confirm = true;
+            }
+            //Unpause via Escape
+            if (Input.GetKeyDown(KeyCode.Escape)) {
+                paused = false;
+                menuUp = false;
+            }
         } else if (Input.GetKeyDown(KeyCode.Escape)) {
-            //Escape when everything else is false is pause/unpause
-            menuUp = !menuUp;
-            paused = !paused;
+            paused = true;
+            menuUp = true;
         }
 
         if (!menuUp) {
             //Mouse Camera (Left/Right)
-            turn = Input.GetAxis("Mouse X");
+            turn = Input.GetAxis("Mouse X")/2;
             transform.Rotate(Vector3.up, turn);
 
             //Strafing
@@ -87,20 +131,20 @@ public class Movit : MonoBehaviour
 
             //Sneak -> Sprint -> Walk >>> CHANGE TO INPUT MANAGER
             if (Input.GetKey(KeyCode.LeftShift)) {
-                veloCap = 1;
+                veloCap = 1.0f;
                 bobby = 0.5f;
             } else if (Input.GetKey(KeyCode.Space)) {
-                veloCap = 8;
+                veloCap = 8.0f;
                 bobby = 1.5f;
             } else {
-                veloCap = 4;
-                bobby = 1;
+                veloCap = 4.0f;
+                bobby = 1.0f;
             }
 
             //Camera bob wave based on speed
             if (advance != 0 || strafe != 0) {
-                stepping = stepping + (1 / (100 / bobby));
-                playerSoundLevel = Mathf.Max(playerSoundLevel, 2 * bobby / 3);
+                stepping = stepping + bobby/50.0f;
+                playerSoundLevel = Mathf.Max(playerSoundLevel, 2 * bobby / 3.0f);
             } else {
                 playerSoundLevel = Mathf.Max(playerSoundLevel - 3 * Time.deltaTime, 0);
             }
@@ -111,7 +155,7 @@ public class Movit : MonoBehaviour
                 StartCoroutine(yeetDelay());
 
                 //Spawn item based on direction looking both horizontal & vertical
-                float waves = (Mathf.PI * transform.eulerAngles.y / 180);
+                float waves = (3.14159f * transform.eulerAngles.y / 180);
                 Vector3 spawnAt = new Vector3(1.3f * Mathf.Sin(waves), -Mathf.Sin(lookingAt.looks), 1.3f * Mathf.Cos(waves));
                 Instantiate(inventory[0], transform.position + spawnAt, transform.rotation);
 
@@ -119,20 +163,38 @@ public class Movit : MonoBehaviour
                 inventory.RemoveAt(0);
             }
 
+            //Place marker
+            if ((Input.GetKeyDown(KeyCode.R)) && !placed && markers < 10) {
+                placed = true;
+                StartCoroutine(markerDelay());
+
+                //Spawn a lantern on the floor in front of player
+                float waves = (3.14159f * transform.eulerAngles.y / 180);
+                Vector3 spawnAt = new Vector3(1.7f * Mathf.Sin(waves), -1.25f, 1.7f * Mathf.Cos(waves));
+                Instantiate(markerPrefab, transform.position + spawnAt, transform.rotation);
+                markers += 1;
+            }
+
             //Interact with environment (Pick up item / Talk to NPC)
             if (Input.GetKeyDown(KeyCode.E) || Input.GetAxis("Interact") > 0) {
                 if (byCar) {
+                    //Victory if saved 2 people
+                    if (numSaved == 2) {
+                        victory = true;
+                        menuUp = true;
+                    }
+
                     //Remove all npcs
                     GameObject[] npcs = GameObject.FindGameObjectsWithTag("Saved");
                     if (npcs.Length > 0) {
                         Destroy(npcs[0]);
+                        numSaved += 1;
                     }
                     byCar = false;
                     StartCoroutine(npcDelay());
 
-                    //Victory if no more NPCs
-                    GameObject[] people = GameObject.FindGameObjectsWithTag("NPC");
-                    if (people.Length == 0) {
+                    //Victory if worm is dead
+                    if (monster.health <= 0) {
                         victory = true;
                         menuUp = true;
                     }
@@ -169,6 +231,10 @@ public class Movit : MonoBehaviour
         if (collider.gameObject.CompareTag("Throwable")) {
             interactRange = true;
         }
+        if (collider.gameObject.CompareTag("NPC"))
+        {
+            talkingRange = true;
+        }
     }
 
     void OnTriggerStay(Collider collider)
@@ -186,6 +252,7 @@ public class Movit : MonoBehaviour
             byCar = false;
         }
         interactRange = false;
+        talkingRange = false;
     }
 
     //Throw reset delay
@@ -195,10 +262,24 @@ public class Movit : MonoBehaviour
         yeetIt = true;
     }
 
+    //Place marker delay
+    IEnumerator markerDelay()
+    {
+        yield return new WaitForSeconds(1.8f);
+        placed = false;
+    }
+
     //Deposit NPC delay
     IEnumerator npcDelay()
     {
         yield return new WaitForSeconds(0.6f);
         byCar = true;
+    }
+
+    //Lag menu exit ability
+    IEnumerator menuDelay()
+    {
+        yield return new WaitForSeconds(0.25f);
+        menuLag = false;
     }
 }

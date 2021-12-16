@@ -5,7 +5,6 @@ using UnityEngine;
 public class ItemDistribution : MonoBehaviour
 {
     public GameObject[] items;
-    public GameObject[] npcs;
 
     private Vector3 location;
     private Quaternion rotation;
@@ -37,12 +36,6 @@ public class ItemDistribution : MonoBehaviour
                 int weighted = Random.Range(0, 3) % 2;
                 ChildSpawn(weighted);
             }
-
-            //Spawn 3 NPCs and they have to be in a cave, but not accessible
-            for (int i = 0; i < 3; i++) {
-
-            }
-
             delay = false;
         }
     }

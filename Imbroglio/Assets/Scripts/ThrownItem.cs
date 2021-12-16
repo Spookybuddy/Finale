@@ -6,11 +6,13 @@ public class ThrownItem : MonoBehaviour
 {
     private Rigidbody physics;
     private Mousing looking;
+    private MonsterMash tremor;
     private GameObject playerPos;
     private GameObject tremorPos;
 
     private AudioSource sound;
     public AudioClip hitSound;
+    public GameObject music;
 
     public bool breakable;
     public bool spawnedIn;
@@ -24,11 +26,15 @@ public class ThrownItem : MonoBehaviour
         looking = GameObject.Find("Main Camera").GetComponent<Mousing>();
         playerPos = GameObject.Find("Player");
         tremorPos = GameObject.Find("Periscope");
+        tremor = tremorPos.GetComponent<MonsterMash>();
 
         //If the player position is within range at start, that means the item was thrown
         if (Mathf.Abs(playerPos.transform.position.x - transform.position.x) < 3 && Mathf.Abs(playerPos.transform.position.z - transform.position.z) < 3) {
             spawnedIn = false;
             thrown();
+
+            //Set tag for monster to identify
+            gameObject.tag = "Thrown";
         }
     }
 
@@ -53,10 +59,10 @@ public class ThrownItem : MonoBehaviour
         physics.AddRelativeTorque(Vector3.right * Random.Range(0.25f, 0.75f), ForceMode.Impulse);
     }
 
-    private void noise()
+    private void noise(AudioClip clip)
     {
-        //TEMP: Playsound volume based on distance to player
-        //sound.PlayOneShot(hitSound, Mathf.Min(1, 2/distanceCalc(playerPos)));
+        //Playsound volume based on distance to player
+        sound.PlayOneShot(clip, Mathf.Min(1, 2/distanceCalc(playerPos)));
     }
 
     //Get distance for different objects
@@ -73,20 +79,18 @@ public class ThrownItem : MonoBehaviour
     void OnCollisionEnter()
     {
         if (!spawnedIn) {
-            //Breakables do damage if monster ate it
-            //Monster takes more damage when hit outside by non-breakables
-
-            //Check if it hit monster
-
-            //Destroy if monster ate it
+            //Change tag so player can pickup again
+            gameObject.tag = "Throwable";
 
             //Tell monster to search for sound at location
-            MonsterMash tremor = tremorPos.GetComponent<MonsterMash>();
             tremor.itemHit = true;
-            tremor.itemDistance = Mathf.Min(2, 16 / distanceCalc(tremorPos));
+            tremor.itemDistance = Mathf.Min(2, 16.0f/distanceCalc(tremorPos));
             tremor.goTowards = transform.position;
 
-            //noise();
+            //Playsound on impact
+            if (!breakable && !spawnedIn) {
+                noise(hitSound);
+            }
 
             //Spawn some fragments because I hate the particle system in Unity
             if (breakable) {
@@ -101,8 +105,25 @@ public class ThrownItem : MonoBehaviour
     //OnCollisionExit because it looks better (Bounces off, instead of vanishing)
     void OnCollisionExit()
     {
+        //If breakable object, destroy after impact
         if (breakable && !spawnedIn) {
+            //Spawn in a music box to play the full sound. Would get cut off due to destroying object
+            Instantiate(music, transform.position, transform.rotation);
             Destroy(gameObject);
+        }
+    }
+
+    //Check to see if hit worm after being thrown
+    void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.CompareTag("Worm") && gameObject.CompareTag("Thrown")) {
+            int dmg = 0;
+            if (breakable) {
+                dmg = 13;
+            } else {
+                dmg = 7;
+            }
+            tremor.health = tremor.health - dmg;
         }
     }
 

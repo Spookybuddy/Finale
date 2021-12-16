@@ -19,9 +19,14 @@ public class TerrainCode : MonoBehaviour
     public Vector2 leftOpening;
     public Vector2 rightOpening;
     public GameObject lantern;
+    public GameObject markers;
+    public GameObject person;
+
+    private GameObject monster;
 
     void Start()
     {
+        monster = GameObject.Find("Periscope");
         leftMade = false;
         rightMade = false;
         CaveGen();
@@ -29,11 +34,15 @@ public class TerrainCode : MonoBehaviour
 
     void Update()
     {
-        //If no entrance has been made, try again, destroying any lanterns spawned
+        //If no entrance has been made, try again, destroying any lanterns and npcs spawned
         if (!leftMade || !rightMade) {
             GameObject[] limitLamps = GameObject.FindGameObjectsWithTag("Lamp");
             foreach (GameObject light in limitLamps) {
                 Destroy(light);
+            }
+            GameObject[] limitPeople = GameObject.FindGameObjectsWithTag("NPC");
+            foreach (GameObject person in limitPeople) {
+                Destroy(person);
             }
             CaveGen();
         }
@@ -41,8 +50,8 @@ public class TerrainCode : MonoBehaviour
 
     private void CaveGen()
     {
-        ranX = Random.Range(0f, 100f);
-        ranY = Random.Range(0f, 100f);
+        ranX = Random.Range(0, 100);
+        ranY = Random.Range(0, 100);
 
         //Get terrain and modify it to make caves
         TerrainData cave = GetComponent<Terrain>().terrainData;
@@ -86,12 +95,12 @@ public class TerrainCode : MonoBehaviour
         //Clear out section at entrance and spawn lanterns at entrances made
         cave.SetHeights(0, 0, hole);
         if (leftMade) {
-            spawnLamps(leftOpening.x - 257);
-            spawnLamps(leftOpening.x - 243);
+            spawnLamps((leftOpening.x - 257));
+            spawnLamps((leftOpening.x - 243));
         }
         if (rightMade) {
-            spawnLamps(rightOpening.x - 257);
-            spawnLamps(rightOpening.x - 243);
+            spawnLamps((rightOpening.x - 257));
+            spawnLamps((rightOpening.x - 243));
         }
         if  (leftMade || rightMade) {
             leftMade = true;
@@ -100,6 +109,22 @@ public class TerrainCode : MonoBehaviour
 
         //Paint the cave
         cave.SetAlphamaps(0, 0, PaintGen(cave));
+
+        //Put NPCs into random spots
+        for (int n = 0; n < 3; n++) {
+            bool spawned = false;
+            while (!spawned) {
+                int x = Random.Range(128*n + 64, 128*n + 192);
+                int y = Random.Range(128*n + 64, 128*n + 192);
+                if(cave.GetHeight(x, y) == 0) {
+                    Instantiate(person, new Vector3(x-512, 1, y-256), transform.rotation);
+                    spawned = true;
+                }
+            }
+        }
+
+        //Put monster in an open area in middle
+        moveMonster(cave);
     }
 
     //Fill a double array with the heights
@@ -159,7 +184,7 @@ public class TerrainCode : MonoBehaviour
         if (z == 0) {
             alpha = 1.0f - Maths(x, y);
         } else {
-            alpha = perlin;
+            alpha = Maths(x, y);
         }
         return alpha;
     }
@@ -167,7 +192,7 @@ public class TerrainCode : MonoBehaviour
     //Formula for cave height gen
     private float formula(int coord)
     {
-        return perlin + Mathf.Abs(coord - 255.5f)/10f - 25f;
+        return (perlin + Mathf.Abs((float)coord - 255.5f)/10.0f - 25.0f);
     }
 
     //Spawn lanterns as children
@@ -175,5 +200,18 @@ public class TerrainCode : MonoBehaviour
     {
         GameObject light = Instantiate(lantern, new Vector3(0, 5, z), transform.rotation) as GameObject;
         light.transform.parent = GameObject.Find("Cave Ground").transform;
+    }
+
+    private void moveMonster(TerrainData cave)
+    {
+        bool placed = false;
+        while (!placed) {
+            int x = Random.Range(192, 320);
+            int y = Random.Range(192, 320);
+            if (cave.GetHeight(x, y) == 0) {
+                monster.transform.position = new Vector3(x-512, 10, y-256);
+                placed = true;
+            }
+        }
     }
 }

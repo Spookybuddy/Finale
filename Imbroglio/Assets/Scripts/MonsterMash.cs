@@ -9,12 +9,14 @@ public class MonsterMash : MonoBehaviour
     private GameObject tracking;
     private Movit player;
     public GameObject worm;
+    public GameObject effects;
 
+    public int health;
     public bool hunting;
     public bool itemHit;
     public bool searching;
     public float itemDistance;
-    public float playerThreshold = 0.15f;
+    public float playerThreshold = 0.2f;
     public Vector3 goTowards;
 
     private bool nudge;
@@ -24,22 +26,35 @@ public class MonsterMash : MonoBehaviour
     private Vector3 attackSpot;
     private bool attacking;
 
+    private AudioSource sounds;
+    public AudioClip[] growls;
+    private bool doNoise;
+
     void Start()
     {
         rigid = GetComponent<Rigidbody>();
         tracking = GameObject.Find("Player");
         player = tracking.GetComponent<Movit>();
-        transform.position = new Vector3(Random.Range(-127, -384), 25, Random.Range(-127, 128));
+        sounds = GetComponent<AudioSource>();
         nudge = true;
         attacking = false;
+        health = 91;
+        effects.gameObject.SetActive(true);
+        StartCoroutine(noises());
     }
 
     void Update()
     {
-        if (!player.menuUp) {
+        //Stop when killed
+        if (health <= 0) {
+            //Stop particles
+            effects.gameObject.SetActive(false);
+        }
+
+        if (!player.menuUp && health > 0) {
             //Movement type speeds
             if (hunting) {
-                spd = 6.0f;
+                spd = 8.0f;
                 goTowards = tracking.transform.position;
             } else if (searching) {
                 spd = 4.0f;
@@ -90,7 +105,17 @@ public class MonsterMash : MonoBehaviour
             //Attack here
             if (attacking) {
                 transform.position = attackSpot;
+                effects.gameObject.SetActive(false);
                 StartCoroutine(attackDuration());
+            }
+
+            //Play constant audio out of 3 growls
+            if (doNoise) {
+                //calc distance to player, and player can only hear the monster when within 64m of monster
+                float toPlayer = Mathf.Sqrt(Mathf.Pow(transform.position.x - tracking.transform.position.x, 2) + Mathf.Pow(transform.position.z - tracking.transform.position.z, 2));
+                sounds.PlayOneShot(growls[Random.Range(0, growls.Length)], Mathf.Clamp01(10/(toPlayer+7)-0.15f));
+                doNoise = false;
+                StartCoroutine(noises());
             }
 
             //Nudge it 
@@ -146,5 +171,12 @@ public class MonsterMash : MonoBehaviour
     {
         yield return new WaitForSeconds(1.5f);
         attacking = false;
+        effects.gameObject.SetActive(true);
+    }
+
+    IEnumerator noises()
+    {
+        yield return new WaitForSeconds(2.7f);
+        doNoise = true;
     }
 }

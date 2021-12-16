@@ -25,11 +25,11 @@ public class StartingArea : MonoBehaviour
         enter = GetComponent<Terrain>().terrainData;
         enter.heightmapResolution = width;
         enter.size = new Vector3(width, height, depth);
-        transform.position = new Vector3(-1, 0.01f, -depth / 2);
+        transform.position = new Vector3(-1, 0.01f, -depth/2);
 
         //Random offset
-        perlinOffX = Random.Range(0f, 100f);
-        perlinOffY = Random.Range(0f, 100f);
+        perlinOffX = Random.Range(0, 100);
+        perlinOffY = Random.Range(0, 100);
 
         //Generate walls and trees for starting area
         float[,] test = new float[width, depth];
@@ -50,13 +50,13 @@ public class StartingArea : MonoBehaviour
     private float borderGen(int x, int y)
     {
         //Use perlin noise to generate 'Trees' as a natural wall
-        float perlin = Mathf.PerlinNoise((float)x/width*15 + perlinOffX, (float)y/depth*15 + perlinOffY);
+        float perlin = Mathf.PerlinNoise((float)x/width*15.0f + perlinOffX, (float)y/depth*15.0f + perlinOffY);
         float value = 0.0f;
 
         //Trees get thicker towards the edges
         if (y > depth/2) {
             //1/30 tree chance
-            if (perlin/10 + ((float)y)/64 + Mathf.Clamp(Mathf.Abs(x - 63.5f)/10 - 5.35f, -0.75f, 1.5f) > 0.95f && Random.Range(0, 30) == 0) {
+            if (perlin/10 + ((float)y)/64 + Mathf.Clamp(Mathf.Abs((float)x - 63.5f)/10 - 5.35f, -0.75f, 1.5f) > 0.95f && Random.Range(0, 30) == 0) {
                 fillForest(perlin, x, y, false);
             }
             value = 0.0f;
@@ -72,7 +72,7 @@ public class StartingArea : MonoBehaviour
 
         //Left & right walls
         if ((x < 16 || x > width - 17) && y < depth/2) {
-            value = Mathf.Clamp01(Mathf.Round(perlin/2 + ((-y/48.0f) + 0.6f) + Mathf.Clamp(Mathf.Abs(x - 63.5f)/10 - 5.35f, -0.5f, 1.5f)));
+            value = Mathf.Clamp01(Mathf.Round(perlin/2 + ((-(float)y/48.0f) + 0.6f) + Mathf.Clamp(Mathf.Abs((float)x - 63.5f)/10 - 5.35f, -0.5f, 1.5f)));
         }
         return value;
     }
@@ -86,9 +86,9 @@ public class StartingArea : MonoBehaviour
         //Assign alpha values based on perlin noise to get a smoother transition
         //Layer 0 = Ground, Layer 1 = Walls
         if (z == 1) {
-            alpha = Mathf.Clamp01(perlin/1.428f + (5/(y+1)) + ((-y/32.0f) + 1f) + (Mathf.Abs(x - 63.5f)/10 - 4.85f));
+            alpha = Mathf.Clamp01(perlin/1.428f + (5/((float)y+1)) + ((-(float)y/32.0f) + 1.0f) + (Mathf.Abs((float)x - 63.5f)/10 - 4.85f));
         } else {
-            alpha = 1.0f - Mathf.Clamp01(perlin/1.428f + (5/(y+1)) + ((-y/32.0f) + 1f) + (Mathf.Abs(x - 63.5f)/10 - 4.85f));
+            alpha = 1.0f - Mathf.Clamp01(perlin/1.428f + (5/((float)y+1)) + ((-(float)y/32.0f) + 1.0f) + (Mathf.Abs((float)x - 63.5f)/10 - 4.85f));
         }
         return alpha;
     }
@@ -99,10 +99,10 @@ public class StartingArea : MonoBehaviour
         //Random rotation for trees
         Quaternion rotated = new Quaternion(0, 0, 0, 0);
         rotated.eulerAngles = Vector3.up * perlin * 360;
-        Vector3 location = new Vector3(y-1, 0, x-63.5f);
+        Vector3 location = new Vector3(y-1, 0, (float)x-63.5f);
 
         //Move trees to out of bounds
-        if (isOut && (Mathf.Abs((x - 63.5f) * 1.55f) > 64 || y * 1.25f - 2 > 128)) {
+        if (isOut && (Mathf.Abs(((float)x - 63.5f) * 1.55f) > 64 || y * 1.25f - 2 > 128)) {
             location = Vector3.Scale(location, new Vector3(1.25f, 0, 1.55f));
             treeChild(location, rotated);
         } else if (!isOut) {

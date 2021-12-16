@@ -32,10 +32,11 @@ public class NPCsCode : MonoBehaviour
         //Keep list length below 80
         if (positions.Count > 80) {
             positions.RemoveAt(positions.Count-1);
-        }
 
-        //Move to the last position in the list
-        transform.position = positions[positions.Count-1];
+            //Move to the last position in the list
+            Vector3 distance = new Vector3(positions[positions.Count - 1].x - transform.position.x, 0, positions[positions.Count - 1].z - transform.position.z).normalized;
+            rigid.AddForce(distance * 50);
+        }
     }
 
     void OnTriggerStay(Collider collider)

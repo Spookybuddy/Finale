@@ -11,6 +11,7 @@ TagManager:
   - Worm
   - Saved
   - NPC
+  - Thrown
   layers:
   - Default
   - TransparentFX
