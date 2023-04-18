@@ -142,12 +142,15 @@ public class Movit : MonoBehaviour
             }
 
             //Camera bob wave based on speed
+            //Remove or nerf
+            /*
             if (advance != 0 || strafe != 0) {
                 stepping = stepping + bobby/50.0f;
                 playerSoundLevel = Mathf.Max(playerSoundLevel, 2 * bobby / 3.0f);
             } else {
                 playerSoundLevel = Mathf.Max(playerSoundLevel - 3 * Time.deltaTime, 0);
             }
+            */
 
             //Throw item
             if ((Input.GetKeyDown(KeyCode.Q) || Input.GetAxis("Throw") > 0) && yeetIt && inventory.Count > 0) {
@@ -155,7 +158,8 @@ public class Movit : MonoBehaviour
                 StartCoroutine(yeetDelay());
 
                 //Spawn item based on direction looking both horizontal & vertical
-                float waves = (3.14159f * transform.eulerAngles.y / 180);
+                //Change to just relative transform lol
+                float waves = (3.1415926f * transform.eulerAngles.y / 180);
                 Vector3 spawnAt = new Vector3(1.3f * Mathf.Sin(waves), -Mathf.Sin(lookingAt.looks), 1.3f * Mathf.Cos(waves));
                 Instantiate(inventory[0], transform.position + spawnAt, transform.rotation);
 

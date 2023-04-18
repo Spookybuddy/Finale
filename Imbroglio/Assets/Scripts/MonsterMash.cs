@@ -30,6 +30,12 @@ public class MonsterMash : MonoBehaviour
     public AudioClip[] growls;
     private bool doNoise;
 
+    private float pan;
+    private const float HALFPI = 1.57079632679489661923132169164f;
+    private const float INVERSE = 57.2957795130823208767981548141f;
+    private const float NEGATE = -0.69813170079773212f;
+    private const float APPROX = 0.87266462599716477f;
+
     void Start()
     {
         rigid = GetComponent<Rigidbody>();
@@ -64,8 +70,8 @@ public class MonsterMash : MonoBehaviour
 
             //Calc player sound based on distance
             if (player.playerSoundLevel > playerThreshold) {
-                float noise = 8 / Mathf.Sqrt(Mathf.Pow(transform.position.x - tracking.transform.position.x, 2) + Mathf.Pow(transform.position.z - tracking.transform.position.z, 2));
-                noise = noise * player.playerSoundLevel;
+                float noise = 8 / Vector3.Distance(transform.position, tracking.transform.position);
+                noise *= player.playerSoundLevel;
                 if (noise > playerThreshold) {
                     hunting = true;
                     searching = false;
@@ -85,7 +91,7 @@ public class MonsterMash : MonoBehaviour
             }
 
             //When reaching the target position
-            if (Mathf.Abs(goTowards.x - transform.position.x) < 2.5f && Mathf.Abs(goTowards.z - transform.position.z) < 2.5f && !attacking) {
+            if (Vector3.Distance(transform.position, goTowards) < 5 && !attacking) {
                 goTowards = new Vector3(500, 0, 500);
                 rigid.velocity = Vector3.zero;
                 attackSpot = transform.position;
@@ -111,9 +117,10 @@ public class MonsterMash : MonoBehaviour
 
             //Play constant audio out of 3 growls
             if (doNoise) {
-                //calc distance to player, and player can only hear the monster when within 64m of monster
-                float toPlayer = Mathf.Sqrt(Mathf.Pow(transform.position.x - tracking.transform.position.x, 2) + Mathf.Pow(transform.position.z - tracking.transform.position.z, 2));
-                sounds.PlayOneShot(growls[Random.Range(0, growls.Length)], Mathf.Clamp01(10/(toPlayer+7)-0.15f));
+                //calc distance to player, and player can only hear the monster when within 80m of monster
+                float toPlayer = Vector3.Distance(transform.position, tracking.transform.position);
+                sounds.pitch = (Random.Range(0.875f, 1.125f));
+                sounds.PlayOneShot(growls[Random.Range(0, growls.Length)], Mathf.Clamp01(12 / toPlayer - 0.15f));
                 doNoise = false;
                 StartCoroutine(noises());
             }
@@ -150,15 +157,44 @@ public class MonsterMash : MonoBehaviour
         }
     }
 
-    //Monster gives up after hitting the same area again
-    void OnCollisionExit()
+    //Do the math for pan stereo here to be less computational
+    void FixedUpdate()
     {
-        if (Mathf.Abs(prevention.x - transform.position.x) < 3.5f && Mathf.Abs(prevention.z - transform.position.z) < 3.5f) {
-            hunting = false;
-            searching = false;
-            itemHit = false;
-        }
-        prevention = transform.position;
+        //Pan stereo constantly keeping track of player position relative to monster
+        //Sin( (Player Rotation - Inverse Cos (X dist / Distance) * sign(Y dist) * 57.29578) / 90) * 1.5707963268)
+        float Xdist = (tracking.transform.position.x - transform.position.x);
+        float Zdist = (tracking.transform.position.z - transform.position.z);
+        Xdist = Xdist / SquareRoot((Xdist * Xdist) + (Zdist * Zdist));
+        Zdist = Mathf.Sign(Zdist) * INVERSE;
+        pan = Mathf.Cos((tracking.transform.eulerAngles.y - ArcSub(Xdist) * Zdist) / 90 * HALFPI);
+        sounds.panStereo = pan;
+    }
+
+    //Faster approximation of Arc cosine
+    private float ArcSub(float x)
+    {
+        return (NEGATE * x * x - APPROX) * x + HALFPI;
+    }
+
+    //Faster approximation of Square Root
+    private float SquareRoot(float x)
+    {
+        float a = 125;
+        a = (a + x / a) / 2;
+        a = (a + x / a) / 2;
+        a = (a + x / a) / 2;
+        a = (a + x / a) / 2;
+        a = (a + x / a) / 2;
+        //a = (a + x / a) / 2;
+        return a;
+    }
+
+    //Monster gives up after hitting the same area again
+    IEnumerator giveUpTime(float time)
+    {
+        yield return new WaitForSeconds(time);
+        searching = false;
+        itemHit = false;
     }
 
     IEnumerator waitForce(float time)
@@ -176,7 +212,7 @@ public class MonsterMash : MonoBehaviour
 
     IEnumerator noises()
     {
-        yield return new WaitForSeconds(2.7f);
+        yield return new WaitForSeconds(2.75f);
         doNoise = true;
     }
 }

@@ -48,16 +48,6 @@ public class Mousing : MonoBehaviour
                 transform.localEulerAngles = new Vector3(transform.localEulerAngles.x - tilt, transform.localEulerAngles.y, 0);
             }
 
-            //Prevent looking too high/low
-
-            if (transform.localEulerAngles.x - tilt > 30 && transform.localEulerAngles.x - tilt < 180) {
-                transform.localEulerAngles = new Vector3(30, transform.localEulerAngles.y, 0);
-            } else if (transform.localEulerAngles.x - tilt > 180 && transform.localEulerAngles.x - tilt < 330) {
-                transform.localEulerAngles = new Vector3(330, transform.localEulerAngles.y, 0);
-            } else {
-                transform.localEulerAngles = new Vector3(transform.localEulerAngles.x - tilt, transform.localEulerAngles.y, 0);
-            }
-
             //Flashlight
             if (Input.GetKeyDown(KeyCode.F) && !flipping) {
                 //play flashlight click noise

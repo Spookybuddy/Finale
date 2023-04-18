@@ -12,6 +12,7 @@ TagManager:
   - Saved
   - NPC
   - Thrown
+  - Chunk
   layers:
   - Default
   - TransparentFX

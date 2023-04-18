@@ -115,7 +115,7 @@ public class GameManager : MonoBehaviour
         playerAudio.PlayOneShot(noises[rando], strength);
 
         //Sounds are stored shortest to longest (2s - 63s) so delay is based on the index
-        soundDelay((rando*rando + 2));
+        soundDelay((rando * rando + 2));
     }
 
     IEnumerator soundDelay(int delay)
