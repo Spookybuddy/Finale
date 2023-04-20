@@ -12,7 +12,6 @@ public class Movit : MonoBehaviour
 
     private Rigidbody rigid;
     private float veloCap;
-    private float bobby;
 
     public List<GameObject> inventory;
     public GameObject bottlePrefab;
@@ -132,25 +131,11 @@ public class Movit : MonoBehaviour
             //Sneak -> Sprint -> Walk >>> CHANGE TO INPUT MANAGER
             if (Input.GetKey(KeyCode.LeftShift)) {
                 veloCap = 1.0f;
-                bobby = 0.5f;
             } else if (Input.GetKey(KeyCode.Space)) {
                 veloCap = 8.0f;
-                bobby = 1.5f;
             } else {
                 veloCap = 4.0f;
-                bobby = 1.0f;
             }
-
-            //Camera bob wave based on speed
-            //Remove or nerf
-            /*
-            if (advance != 0 || strafe != 0) {
-                stepping = stepping + bobby/50.0f;
-                playerSoundLevel = Mathf.Max(playerSoundLevel, 2 * bobby / 3.0f);
-            } else {
-                playerSoundLevel = Mathf.Max(playerSoundLevel - 3 * Time.deltaTime, 0);
-            }
-            */
 
             //Throw item
             if ((Input.GetKeyDown(KeyCode.Q) || Input.GetAxis("Throw") > 0) && yeetIt && inventory.Count > 0) {
