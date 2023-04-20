@@ -1,12 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Diagnostics;
 
 public class MonsterMash : MonoBehaviour
 {
-    private Rigidbody rigid;
+    public Rigidbody rigid;
 
-    private GameObject tracking;
+    public GameObject tracking;
     private Movit player;
     public GameObject worm;
     public GameObject effects;
@@ -30,6 +31,11 @@ public class MonsterMash : MonoBehaviour
     public AudioClip[] growls;
     private bool doNoise;
 
+    private Node[,] mazeData;
+    private Vector2 scale;
+    private int size;
+    public List<Vector3> path = new List<Vector3>();
+
     private float pan;
     private const float HALFPI = 1.57079632679489661923132169164f;
     private const float INVERSE = 57.2957795130823208767981548141f;
@@ -38,8 +44,6 @@ public class MonsterMash : MonoBehaviour
 
     void Start()
     {
-        rigid = GetComponent<Rigidbody>();
-        tracking = GameObject.Find("Player");
         player = tracking.GetComponent<Movit>();
         sounds = GetComponent<AudioSource>();
         nudge = true;
@@ -51,6 +55,11 @@ public class MonsterMash : MonoBehaviour
 
     void Update()
     {
+        //Path finding test - Seems to work
+        if (Input.GetKeyDown(KeyCode.G)) {
+            FindPath(mazePoint(transform.position), mazePoint(tracking.transform.position));
+        }
+
         //Stop when killed
         if (health <= 0) {
             //Stop particles
@@ -180,29 +189,100 @@ public class MonsterMash : MonoBehaviour
     private float SquareRoot(float x)
     {
         float a = 125;
-        a = (a + x / a) / 2;
-        a = (a + x / a) / 2;
-        a = (a + x / a) / 2;
-        a = (a + x / a) / 2;
-        a = (a + x / a) / 2;
-        //a = (a + x / a) / 2;
+        for (int b = 0; b < 5; b++) { a = (a + x / a) / 2; }
         return a;
     }
 
-    //Monster gives up after hitting the same area again
-    IEnumerator giveUpTime(float time)
+    //Calculate the path to target
+    private void FindPath(Node start, Node end)
     {
-        yield return new WaitForSeconds(time);
-        searching = false;
-        itemHit = false;
+        Stopwatch watch = new Stopwatch();
+        watch.Start();
+
+        Node begin = start;
+        Node target = end;
+        int maxSize = (int)(scale.x * (size - 1) * scale.y * (size - 1));
+        Heap<Node> open = new Heap<Node>(maxSize);
+        HashSet<Node> closed = new HashSet<Node>();
+        open.Add(begin);
+
+        while(open.Count > 0) {
+            Node cur = open.RemoveFirst();
+            closed.Add(cur);
+
+            if (cur == target || Input.GetKeyDown(KeyCode.P)) {
+                RetracePath(begin, end);
+                watch.Stop();
+                print (watch.ElapsedMilliseconds + "ms");
+                return;
+            }
+
+            for (int x = -1; x < 2; x++) {
+                for (int y = -1; y < 2; y++) {
+                    Node N = cur.Neighbor(x, y);
+                    if (N == null || !N.walk || closed.Contains(N)) continue;
+
+                    int mov = cur.gcost + PathDistance(cur, N);
+                    if (mov < N.gcost || !open.Contains(N)) {
+                        N.gcost = mov;
+                        N.hcost = PathDistance(N, target);
+                        N.prev = cur;
+
+                        if (!open.Contains(N)) open.Add(N);
+                    }
+                }
+            }
+        }
     }
 
+    //Convert given positions into maze point when within bounds
+    private Node mazePoint(Vector3 position)
+    {
+        int x = Mathf.RoundToInt(position.x / 2 + (scale.x * (size - 1)) / 2 + 72);
+        int y = Mathf.RoundToInt(position.z / 2 + (scale.y * (size - 1)) / 2);
+        if ((x > 0 && x < scale.x * (size - 1)) && (y > 0 && y < scale.y * (size - 1))) return mazeData[x, y];
+        else return mazeData[(int)Random.Range(0, scale.x * (size - 1)), (int)Random.Range(0, scale.y * (size - 1))];
+    }
+
+    //Save the maze data upon generation for pathfinding
+    public void PathfindingData(Node[,] maze, int space, Vector2 XZ)
+    {
+        mazeData = maze;
+        size = space;
+        scale = XZ;
+    }
+
+    //Returns the distance between given nodes
+    private int PathDistance(Node A, Node B)
+    {
+        int X = Mathf.Abs(A.mazeX - B.mazeX);
+        int Y = Mathf.Abs(A.mazeY - B.mazeY);
+        return (14 * Mathf.Min(X, Y) + 10 * Mathf.Abs(X - Y));
+    }
+
+    //Get the path points
+    private void RetracePath(Node start, Node end)
+    {
+        path = new List<Vector3>();
+        Node cur = end;
+
+        while (cur != start || Input.GetKeyDown(KeyCode.P)) {
+            float x = 2 * cur.mazeX - (scale.x * (size - 1)) - 144;
+            float y = 2 * cur.mazeY - (scale.x * (size - 1));
+            path.Add(new Vector3(x, 1, y));
+            cur = cur.prev;
+        }
+        path.Reverse();
+    }
+
+    //Movement (REPLACING WITH AI PATHFINDING)
     IEnumerator waitForce(float time)
     {
         yield return new WaitForSeconds(time);
         nudge = true;
     }
 
+    //Attack animation
     IEnumerator attackDuration()
     {
         yield return new WaitForSeconds(1.5f);
@@ -210,6 +290,7 @@ public class MonsterMash : MonoBehaviour
         effects.gameObject.SetActive(true);
     }
 
+    //Growling spacing
     IEnumerator noises()
     {
         yield return new WaitForSeconds(2.75f);

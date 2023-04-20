@@ -2,6 +2,47 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+public class Node : IHeapItem<Node>
+{
+    public int mazeX;
+    public int mazeY;
+    public bool walk;
+    public int gcost;
+    public int hcost;
+    Node[,] neighbors = new Node[3, 3];
+    public Node prev;
+    int heapIndex;
+
+    public Node(int x, int y, bool valid) {
+        mazeX = x;
+        mazeY = y;
+        walk = valid;
+    }
+
+    public void Adjacent(int x, int y, Node n) {
+        neighbors[x + 1, y + 1] = n;
+    }
+
+    public Node Neighbor(int x, int y) {
+        return neighbors[x + 1, y + 1];
+    }
+
+    public int F {
+        get { return gcost + hcost; }
+    }
+
+    public int HeapIndex {
+        get { return heapIndex; }
+        set { heapIndex = value; }
+    }
+
+    public int CompareTo(Node comparison) {
+        int compare = F.CompareTo(comparison.F);
+        if (compare == 0) compare = hcost.CompareTo(comparison.hcost);
+        return -compare;
+    }
+}
+
 public class Generation : MonoBehaviour
 {
     public int scale;
@@ -11,6 +52,8 @@ public class Generation : MonoBehaviour
     public int entranceSize;
     public Transform StartingArea;
     public GameObject ChunkPrefab;
+    public MonsterMash AI;
+    private Node[,] pathData;
     private int[,] heights;
     private GameObject[,] chunks;
     private Vector2 size;
@@ -58,6 +101,30 @@ public class Generation : MonoBehaviour
             }
         }
 
+        //Record the maze data into the monster AI for pathfinding
+        pathData = new Node[(int)size.x + 1, (int)size.y + 1];
+        for (int x = 0; x <= size.x; x++) {
+            for (int y = 0; y <= size.y; y++) {
+                pathData[x, y] = new Node(x, y, heights[x, y] <= 0);
+            }
+        }
+
+        //Record each node's neighbors
+        for (int x = 0; x <= size.x; x++) {
+            for (int y = 0; y <= size.y; y++) {
+                for (int p = -1; p < 2; p++) {
+                    for (int q = -1; q < 2; q++) {
+                        int a = x + p;
+                        int b = y + q;
+                        if ((p == 0 && q == 0) || a < 0 || a > size.x || b < 0 || b > size.y) continue;
+                        pathData[x, y].Adjacent(p, q, pathData[a, b]);
+                    }
+                }
+            }
+        }
+
+        AI.PathfindingData(pathData, scale, XZ);
+
         //Scale up because the scaling was a bit off
         transform.localScale = new Vector3(2, 2, 2);
     }
@@ -85,10 +152,11 @@ public class Generation : MonoBehaviour
         if (!points.Contains(point)) points.Add(point);
     }
 
-    //Prim Maze algorithm, Code from https://kairumagames.com/blog/cavetutorial
+    //Prim Maze algorithm
+    //Code from https://kairumagames.com/blog/cavetutorial
     void Mazercise()
     {
-        //Create a 2D array to represent your map, setting all cells in the map as walls.
+        //Start with all points as walls
         heights = new int[(int)size.x + 1, (int)size.y + 1];
         for (int i = 0; i <= size.x; i++) {
             for (int j = 0; j <= size.y; j++) {
@@ -101,11 +169,11 @@ public class Generation : MonoBehaviour
         int y = (int)(size.y / 2) + 1;
         heights[x, y] = 0;
 
-        //Create an array and add valid cells that are two orthogonal spaces away from the cell you just cleared.
+        //Record valid points in cardinal directions from start
         points = new List<Vector2>();
         Check(x, y);
 
-        //While there are cells in your growable array, choose choose one at random, clear it, and remove it from the growable array.
+        //Until all valid points have been used, randomly pick, check, and expand it, then remove from list
         while (points.Count > 0) {
             int index = Random.Range(0, points.Count);
             x = (int)points[index].x;
@@ -113,9 +181,7 @@ public class Generation : MonoBehaviour
             heights[x, y] = 0;
             points.RemoveAt(index);
 
-            //The cell you just cleared needs to be connected with another clear cell.
-            //Look two orthogonal spaces away from the cell you just cleared until you find one that is not a wall.
-            //Clear the cell between them.
+            //Randomly check cardinal points until one that isnt a wall is found
             List<int> cardinals = new List<int>() { 0, 1, 2, 3 };
             while (cardinals.Count > 0) {
                 int i = Random.Range(0, cardinals.Count);
@@ -147,17 +213,13 @@ public class Generation : MonoBehaviour
                 }
             }
 
-            //Add valid cells that are two orthogonal spaces away from the cell you cleared.
+            //Add valid cells and repeat
             Check(x, y);
         }
 
-        //Prune dead ends
+        //Prune dead ends, expand into a cavern like environment, then prune some more dead ends again
         Prune(3);
-
-        //Expand into cave system
         Grow(4);
-
-        //Prune again
         Prune(3);
     }
 
