@@ -7,8 +7,9 @@ public class ThrownItem : MonoBehaviour
     private Rigidbody physics;
     private Mousing looking;
     private MonsterMash tremor;
-    private GameObject playerPos;
-    private GameObject tremorPos;
+    private Rigidbody player;
+    private Transform playerPos;
+    private Transform tremorPos;
 
     private AudioSource sound;
     public AudioClip hitSound;
@@ -23,33 +24,33 @@ public class ThrownItem : MonoBehaviour
         //Establish basics
         physics = GetComponent<Rigidbody>();
         sound = GetComponent<AudioSource>();
-        looking = GameObject.Find("Main Camera").GetComponent<Mousing>();
-        playerPos = GameObject.Find("Player");
-        tremorPos = GameObject.Find("Periscope");
-        tremor = tremorPos.GetComponent<MonsterMash>();
+        looking = GameObject.FindWithTag("MainCamera").GetComponent<Mousing>();
+        playerPos = GameObject.FindWithTag("Player").transform;
+        tremorPos = GameObject.FindWithTag("Monster").transform;
+        player = GameObject.FindWithTag("Player").GetComponent<Rigidbody>();
+        tremor = GameObject.FindWithTag("Monster").GetComponent<MonsterMash>();
 
         //If the player position is within range at start, that means the item was thrown
-        if (Mathf.Abs(playerPos.transform.position.x - transform.position.x) < 3 && Mathf.Abs(playerPos.transform.position.z - transform.position.z) < 3) {
+        if (Vector3.Distance(playerPos.position, transform.position) < 3) {
             spawnedIn = false;
-            thrown();
+            Thrown();
 
             //Set tag for monster to identify
             gameObject.tag = "Thrown";
         }
     }
 
-    void Update()
+    //Check if out of bounds
+    void FixedUpdate()
     {
-        if (transform.position.y < -2) {
-            Destroy(gameObject);
-        }
+        if (transform.position.y < -2) Destroy(gameObject);
     }
 
     //Thrown code
-    private void thrown()
+    private void Thrown()
     {
         //Find the fastest velocity of the player to affect throw speed
-        float boost = Mathf.Max(Mathf.Abs(playerPos.GetComponent<Rigidbody>().velocity.x)/8 + 1, Mathf.Abs(playerPos.GetComponent<Rigidbody>().velocity.z)/8 + 1, 1);
+        float boost = Mathf.Max(Mathf.Abs(player.velocity.x)/8 + 1, Mathf.Abs(player.velocity.z)/8 + 1, 1);
 
         //Add force in direction camera is looking & forward force
         physics.AddRelativeForce(Vector3.up * -5 * Mathf.Sin(looking.looks), ForceMode.Impulse);
@@ -59,20 +60,19 @@ public class ThrownItem : MonoBehaviour
         physics.AddRelativeTorque(Vector3.right * Random.Range(0.25f, 0.75f), ForceMode.Impulse);
     }
 
+    //Playsound volume based on distance to player
     private void noise(AudioClip clip)
     {
-        //Playsound volume based on distance to player
-        sound.PlayOneShot(clip, Mathf.Min(1, 2/distanceCalc(playerPos)));
+        sound.PlayOneShot(clip, Mathf.Min(1, 2/distanceCalc(playerPos.position)));
     }
 
     //Get distance for different objects
-    private float distanceCalc(GameObject target)
+    private float distanceCalc(Vector3 target)
     {
-        float posX = Mathf.Pow(transform.position.x - target.transform.position.x, 2);
-        float posY = Mathf.Pow(transform.position.y - target.transform.position.y, 2);
-        float posZ = Mathf.Pow(transform.position.z - target.transform.position.z, 2);
-        float distance = Mathf.Sqrt(posX + posY + posZ);
-        return distance;
+        float x = (Mathf.Pow(target.x - transform.position.x, 2) + Mathf.Pow(target.z - transform.position.z, 2));
+        float a = 125;
+        for (int b = 0; b < 5; b++) { a = (a + x / a) / 2; }
+        return a;
     }
 
     //Broadcast location on collision
@@ -83,14 +83,10 @@ public class ThrownItem : MonoBehaviour
             gameObject.tag = "Throwable";
 
             //Tell monster to search for sound at location
-            tremor.itemHit = true;
-            tremor.itemDistance = Mathf.Min(2, 16.0f/distanceCalc(tremorPos));
-            tremor.goTowards = transform.position;
+            tremor.UpdateSound(Mathf.Min(2, 16 / distanceCalc(tremorPos.position)), transform.position);
 
             //Playsound on impact
-            if (!breakable && !spawnedIn) {
-                noise(hitSound);
-            }
+            if (!breakable && !spawnedIn) noise(hitSound);
 
             //Spawn some fragments because I hate the particle system in Unity
             if (breakable) {
@@ -117,13 +113,7 @@ public class ThrownItem : MonoBehaviour
     void OnTriggerEnter(Collider other)
     {
         if (other.gameObject.CompareTag("Worm") && gameObject.CompareTag("Thrown")) {
-            int dmg = 0;
-            if (breakable) {
-                dmg = 13;
-            } else {
-                dmg = 7;
-            }
-            tremor.health = tremor.health - dmg;
+            tremor.health = tremor.health - (breakable ? 13 : 7);
         }
     }
 

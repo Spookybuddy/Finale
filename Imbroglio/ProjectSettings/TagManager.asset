@@ -5,14 +5,14 @@ TagManager:
   serializedVersion: 2
   tags:
   - Throwable
-  - Tree
   - Lamp
-  - Fog
   - Worm
   - Saved
   - NPC
   - Thrown
   - Chunk
+  - Decor
+  - Monster
   layers:
   - Default
   - TransparentFX

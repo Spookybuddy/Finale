@@ -9,33 +9,41 @@ public class Node : IHeapItem<Node>
     public bool walk;
     public int gcost;
     public int hcost;
+    public int penalty;
     Node[,] neighbors = new Node[3, 3];
     public Node prev;
     int heapIndex;
 
-    public Node(int x, int y, bool valid) {
+    //Node construction
+    public Node(int x, int y, bool valid, int weight) {
         mazeX = x;
         mazeY = y;
         walk = valid;
+        penalty = weight;
     }
 
+    //Record adjacent nodes
     public void Adjacent(int x, int y, Node n) {
         neighbors[x + 1, y + 1] = n;
     }
 
+    //Return neighbor at x, y
     public Node Neighbor(int x, int y) {
         return neighbors[x + 1, y + 1];
     }
 
+    //F cost
     public int F {
         get { return gcost + hcost; }
     }
 
+    //Heap index
     public int HeapIndex {
         get { return heapIndex; }
         set { heapIndex = value; }
     }
 
+    //Compare costs
     public int CompareTo(Node comparison) {
         int compare = F.CompareTo(comparison.F);
         if (compare == 0) compare = hcost.CompareTo(comparison.hcost);
@@ -55,9 +63,15 @@ public class Generation : MonoBehaviour
     public MonsterMash AI;
     private Node[,] pathData;
     private int[,] heights;
+    private int[,] weights;
     private GameObject[,] chunks;
     private Vector2 size;
     private List<Vector2> points;
+
+    public GameObject decorations;
+    public GameObject archway;
+    public GameObject railroad;
+    public GameObject minecart;
 
     void Start()
     {
@@ -87,9 +101,12 @@ public class Generation : MonoBehaviour
         //Assign the height values for a maze
         Mazercise();
 
+        //Locate valid spawns for decorations
+        Decorate();
+
         //Entrance hole
         for (int h = -Mathf.FloorToInt(entranceSize / 2); h <= Mathf.CeilToInt(entranceSize / 2); h++) {
-            for (int o = 0; o < 2; o++) {
+            for (int o = 0; o < 3; o++) {
                 heights[(int)size.x - o, (int)(size.y / 2) + h] = -1;
             }
         }
@@ -101,11 +118,38 @@ public class Generation : MonoBehaviour
             }
         }
 
-        //Record the maze data into the monster AI for pathfinding
+        //AI
+        Pathing();
+
+        //Scale up because the scaling was a bit off
+        transform.localScale = new Vector3(2, 2, 2);
+    }
+
+    //Record pathfinding data and send to monster----------------------------------------------------------------------------------------------------
+    private void Pathing()
+    {
+        //Create a weight map for points based on distance from walls
+        //Include obstacles in weights
+        weights = new int[(int)size.x + 1, (int)size.y + 1];
+        for (int i = 0; i <= size.x; i++) {
+            for (int j = 0; j <= size.y; j++) {
+                int adjacentWalls = 0;
+                for (int x = -1; x < 2; x++) {
+                    int a = (int)Mathf.Clamp(i + x, 0, size.x);
+                    for (int y = -1; y < 2; y++) {
+                        int b = (int)Mathf.Clamp(j + y, 0, size.y);
+                        if (heights[a, b] > 0) adjacentWalls++;
+                    }
+                }
+                weights[i, j] = 10 * adjacentWalls;
+            }
+        }
+
+        //Create nodes that line up with the height map
         pathData = new Node[(int)size.x + 1, (int)size.y + 1];
         for (int x = 0; x <= size.x; x++) {
             for (int y = 0; y <= size.y; y++) {
-                pathData[x, y] = new Node(x, y, heights[x, y] <= 0);
+                pathData[x, y] = new Node(x, y, heights[x, y] <= 0, weights[x, y]);
             }
         }
 
@@ -124,37 +168,47 @@ public class Generation : MonoBehaviour
         }
 
         AI.PathfindingData(pathData, scale, XZ);
-
-        //Scale up because the scaling was a bit off
-        transform.localScale = new Vector3(2, 2, 2);
     }
 
-    //Check if 2 spaces away is viable
-    void Check(int x, int y)
+    //All decorations have a radius of 2-------------------------------------------------------------------------------------------------------------
+    //Rails will spawn in lines 7 or more
+    //Minecart has a chance to spawn on rails or knocked over next to walls
+    private void Decorate()
     {
-        if (y - 2 >= 0 && heights[x, y - 2] > 0) {
-            CreatePoint(new Vector2(x, y - 2));
-        }
-        if (y + 2 < size.y && heights[x, y + 2] > 0) {
-            CreatePoint(new Vector2(x, y + 2));
-        }
-        if (x - 2 >= 0 && heights[x - 2, y] > 0) {
-            CreatePoint(new Vector2(x - 2, y));
-        }
-        if (x + 2 < size.x && heights[x + 2, y] > 0) {
-            CreatePoint(new Vector2(x + 2, y));
+        for (int x = 0; x <= size.x; x++) {
+            for (int y = 0; y <= size.y; y++) {
+                //Check archways Y
+                if (heights[x, y] > 0 && y + 6 <= size.y) {
+                    if (heights[x, y + 6] > 0) ArchCheckY(x, y);
+                }
+                //Check archways X
+                if (heights[x, y] > 0 && x + 6 <= size.x) {
+                    if (heights[x + 6, y] > 0) ArchCheckX(x, y);
+                }
+            }
         }
     }
 
-    //Add point to list if not already on there
-    void CreatePoint(Vector2 point)
+    //Arch checks for cardinal gaps of entrance size
+    private void ArchCheckY(int x, int y)
     {
-        if (!points.Contains(point)) points.Add(point);
+        for (int a = 1; a < 6; a++) if (heights[x, y + a] > 0) return;
+        float p = 2 * x - size.x - 144;
+        float q = 2 * (y + 3) - size.y;
+        Instantiate(archway, new Vector3(p, 0, q), Quaternion.identity, decorations.transform);
     }
 
-    //Prim Maze algorithm
+    private void ArchCheckX(int x, int y)
+    {
+        for (int a = 1; a < 6; a++) if (heights[x + a, y] > 0) return;
+        float p = 2 * (x + 3) - size.x - 144;
+        float q = 2 * y - size.y;
+        Instantiate(archway, new Vector3(p, 0, q), new Quaternion(0, 0.5f, 0, 0.5f), decorations.transform);
+    }
+
+    //Prim Maze algorithm----------------------------------------------------------------------------------------------------------------------------
     //Code from https://kairumagames.com/blog/cavetutorial
-    void Mazercise()
+    private void Mazercise()
     {
         //Start with all points as walls
         heights = new int[(int)size.x + 1, (int)size.y + 1];
@@ -284,5 +338,20 @@ public class Generation : MonoBehaviour
 
         //Recursion
         if (iterations > 0) Grow(iterations - 1);
+    }
+
+    //Check if 2 spaces away is viable
+    void Check(int x, int y)
+    {
+        if (y - 2 >= 0 && heights[x, y - 2] > 0) CreatePoint(new Vector2(x, y - 2));
+        if (y + 2 < size.y && heights[x, y + 2] > 0) CreatePoint(new Vector2(x, y + 2));
+        if (x - 2 >= 0 && heights[x - 2, y] > 0) CreatePoint(new Vector2(x - 2, y));
+        if (x + 2 < size.x && heights[x + 2, y] > 0) CreatePoint(new Vector2(x + 2, y));
+    }
+
+    //Add point to list if not already on there
+    void CreatePoint(Vector2 point)
+    {
+        if (!points.Contains(point)) points.Add(point);
     }
 }

@@ -10,7 +10,6 @@ public class MonsterMash : MonoBehaviour
     public GameObject tracking;
     private Movit player;
     public GameObject worm;
-    public GameObject effects;
 
     public int health;
     public bool hunting;
@@ -20,11 +19,9 @@ public class MonsterMash : MonoBehaviour
     public float playerThreshold = 0.2f;
     public Vector3 goTowards;
 
-    private bool nudge;
+    private bool move;
     private float spd;
 
-    private Vector3 prevention;
-    private Vector3 attackSpot;
     private bool attacking;
 
     private AudioSource sounds;
@@ -35,10 +32,11 @@ public class MonsterMash : MonoBehaviour
     private Vector2 scale;
     private int size;
     public List<Vector3> path = new List<Vector3>();
+    public LineRenderer line;
 
     private float pan;
-    private const float HALFPI = 1.57079632679489661923132169164f;
-    private const float INVERSE = 57.2957795130823208767981548141f;
+    private const float HALFPI = 1.57079632679489662f;
+    private const float INVERSE = 57.29577951308232087f;
     private const float NEGATE = -0.69813170079773212f;
     private const float APPROX = 0.87266462599716477f;
 
@@ -46,35 +44,33 @@ public class MonsterMash : MonoBehaviour
     {
         player = tracking.GetComponent<Movit>();
         sounds = GetComponent<AudioSource>();
-        nudge = true;
         attacking = false;
         health = 91;
-        effects.gameObject.SetActive(true);
         StartCoroutine(noises());
     }
 
     void Update()
     {
         //Path finding test - Seems to work
+        //Set trigger box at entry to begin wandering
         if (Input.GetKeyDown(KeyCode.G)) {
             FindPath(mazePoint(transform.position), mazePoint(tracking.transform.position));
+            line.positionCount = path.Count;
+            line.SetPositions(path.ToArray());
         }
 
         //Stop when killed
-        if (health <= 0) {
-            //Stop particles
-            effects.gameObject.SetActive(false);
-        }
+        if (health <= 0) move = false;
 
         if (!player.menuUp && health > 0) {
             //Movement type speeds
             if (hunting) {
-                spd = 8.0f;
+                spd = 9;
                 goTowards = tracking.transform.position;
             } else if (searching) {
-                spd = 4.0f;
+                spd = 5;
             } else {
-                spd = 2.0f;
+                spd = 3;
             }
 
             //Calc player sound based on distance
@@ -100,10 +96,10 @@ public class MonsterMash : MonoBehaviour
             }
 
             //When reaching the target position
-            if (Vector3.Distance(transform.position, goTowards) < 5 && !attacking) {
-                goTowards = new Vector3(500, 0, 500);
-                rigid.velocity = Vector3.zero;
-                attackSpot = transform.position;
+            if (Vector3.Distance(transform.position, goTowards) < 1.5 && !attacking) {
+                float range = (scale.x * (size - 1));
+                goTowards = new Vector3(Random.Range(-range - 144, range - 144), 0, Random.Range(-range, range));
+                move = false;
                 attacking = true;
                 searching = false;
                 hunting = false;
@@ -114,15 +110,14 @@ public class MonsterMash : MonoBehaviour
                 foreach (GameObject head in heads) {
                     Destroy(head);
                 }
-                Instantiate(worm, new Vector3(attackSpot.x, -12, attackSpot.z), transform.rotation);
+                Instantiate(worm, new Vector3(transform.position.x, -12, transform.position.z), transform.rotation);
             }
 
             //Attack here
             if (attacking) {
-                transform.position = attackSpot;
-                effects.gameObject.SetActive(false);
+                move = false;
                 StartCoroutine(attackDuration());
-            }
+            } else { move = true; }
 
             //Play constant audio out of 3 growls
             if (doNoise) {
@@ -134,39 +129,22 @@ public class MonsterMash : MonoBehaviour
                 StartCoroutine(noises());
             }
 
-            //Nudge it 
-            while (nudge && !attacking) {
-                float veloX;
-                float veloZ;
-                float delay;
-
-                if (hunting) {
-                    veloX = goTowards.x - transform.position.x;
-                    veloZ = goTowards.z - transform.position.z;
-                    delay = 0.25f;
-                } else if (searching) {
-                    veloX = goTowards.x - transform.position.x;
-                    veloZ = goTowards.z - transform.position.z;
-                    delay = 0.5f;
-                } else {
-                    veloX = Random.Range(-6.0f, 6.0f);
-                    veloZ = Random.Range(-6.0f, 6.0f);
-                    delay = 0.75f;
+            //Move towards path[0] until distance < 0.5, then remove point and move towards next
+            if (path.Count > 0 && move) {
+                transform.position = Vector3.MoveTowards(transform.position, path[0], Time.deltaTime * spd);
+                if (Vector3.Distance(transform.position, path[0]) < 0.5f) {
+                    path.RemoveAt(0);
+                    //If list is now empty, recalculate pathing
+                    if (path.Count == 0) FindPath(mazePoint(transform.position), mazePoint(goTowards));
                 }
-
-                rigid.AddForce(new Vector3(veloX, 0, veloZ).normalized * spd, ForceMode.Impulse);
-                rigid.velocity = new Vector3(Mathf.Clamp(rigid.velocity.x, -10, 10), 0, Mathf.Clamp(rigid.velocity.z, -10, 10));
-
-                nudge = false;
-                StartCoroutine(waitForce(delay));
             }
         } else {
-            //Lock velocity when paused
-            rigid.velocity = Vector3.zero;
+            move = false;
         }
     }
 
     //Do the math for pan stereo here to be less computational
+    //Do the path finding calls here too for that same reason
     void FixedUpdate()
     {
         //Pan stereo constantly keeping track of player position relative to monster
@@ -177,6 +155,11 @@ public class MonsterMash : MonoBehaviour
         Zdist = Mathf.Sign(Zdist) * INVERSE;
         pan = Mathf.Cos((tracking.transform.eulerAngles.y - ArcSub(Xdist) * Zdist) / 90 * HALFPI);
         sounds.panStereo = pan;
+
+        //Update the player position when hunting
+        if (move && hunting) {
+            FindPath(mazePoint(transform.position), mazePoint(goTowards));
+        }
     }
 
     //Faster approximation of Arc cosine
@@ -196,6 +179,7 @@ public class MonsterMash : MonoBehaviour
     //Calculate the path to target
     private void FindPath(Node start, Node end)
     {
+        //Remove watch
         Stopwatch watch = new Stopwatch();
         watch.Start();
 
@@ -210,7 +194,7 @@ public class MonsterMash : MonoBehaviour
             Node cur = open.RemoveFirst();
             closed.Add(cur);
 
-            if (cur == target || Input.GetKeyDown(KeyCode.P)) {
+            if (cur == target) {
                 RetracePath(begin, end);
                 watch.Stop();
                 print (watch.ElapsedMilliseconds + "ms");
@@ -222,13 +206,14 @@ public class MonsterMash : MonoBehaviour
                     Node N = cur.Neighbor(x, y);
                     if (N == null || !N.walk || closed.Contains(N)) continue;
 
-                    int mov = cur.gcost + PathDistance(cur, N);
+                    int mov = cur.gcost + PathDistance(cur, N) + N.penalty;
                     if (mov < N.gcost || !open.Contains(N)) {
                         N.gcost = mov;
                         N.hcost = PathDistance(N, target);
                         N.prev = cur;
 
                         if (!open.Contains(N)) open.Add(N);
+                        else open.UpdateItem(N);
                     }
                 }
             }
@@ -266,20 +251,29 @@ public class MonsterMash : MonoBehaviour
         path = new List<Vector3>();
         Node cur = end;
 
-        while (cur != start || Input.GetKeyDown(KeyCode.P)) {
-            float x = 2 * cur.mazeX - (scale.x * (size - 1)) - 144;
-            float y = 2 * cur.mazeY - (scale.x * (size - 1));
+        //Convert the maze points into world coords, moving backward through the established list
+        while (cur != start) {
+            //Add noise to the points lol
+            float x = 2 * cur.mazeX - (scale.x * (size - 1)) - 144 + Random.Range(-0.25f, 0.25f);
+            float y = 2 * cur.mazeY - (scale.y * (size - 1)) + Random.Range(-0.25f, 0.25f);
             path.Add(new Vector3(x, 1, y));
             cur = cur.prev;
         }
         path.Reverse();
+
+        line.positionCount = path.Count;
+        line.SetPositions(path.ToArray());
     }
 
-    //Movement (REPLACING WITH AI PATHFINDING)
-    IEnumerator waitForce(float time)
+    //Tells monster where and how loud a thrown object is
+    public void UpdateSound(float vol, Vector3 pos)
     {
-        yield return new WaitForSeconds(time);
-        nudge = true;
+        if (vol > playerThreshold) {
+            hunting = false;
+            searching = true;
+            goTowards = pos;
+            FindPath(mazePoint(transform.position), mazePoint(goTowards));
+        }
     }
 
     //Attack animation
@@ -287,7 +281,7 @@ public class MonsterMash : MonoBehaviour
     {
         yield return new WaitForSeconds(1.5f);
         attacking = false;
-        effects.gameObject.SetActive(true);
+        move = true;
     }
 
     //Growling spacing

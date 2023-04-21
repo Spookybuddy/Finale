@@ -4,12 +4,11 @@ using UnityEngine;
 
 public class Shardicles : MonoBehaviour
 {
-    private Rigidbody rigid;
+    public Rigidbody rigid;
 
     //Spawn shards in with random force and torque
     void Start()
     {
-        rigid = GetComponent<Rigidbody>();
         rigid.AddForce(new Vector3(Random.Range(-2.0f, 2.0f), Random.Range(-0.5f, 1.5f), Random.Range(-2.0f, 2.0f)), ForceMode.Impulse);
         rigid.AddTorque(new Vector3(Random.Range(-2.0f, 2.0f), Random.Range(-0.5f, 0.5f), Random.Range(-2.0f, 2.0f)), ForceMode.Impulse);
         StartCoroutine(delete());
