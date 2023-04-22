@@ -42,6 +42,7 @@ GameObject:
   - component: {fileID: 5767018701977837731}
   - component: {fileID: 4718478280336072093}
   - component: {fileID: 9093414346842376808}
+  - component: {fileID: 1934302398358838213}
   m_Layer: 0
   m_Name: Way
   m_TagString: Untagged
@@ -112,3 +113,17 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!64 &1934302398358838213
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5679632740324929575}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 4
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: -8548174756391177993, guid: ad381336e9381d344baaef2478944001, type: 3}

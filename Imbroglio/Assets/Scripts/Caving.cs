@@ -144,10 +144,10 @@ public class Caving : MonoBehaviour
         if (mazeData[offX + x, offY + y] > 0) return 1;
 
         //If all adjacent are 0, lower
-        if (mazeData[Mathf.Max(offX + x - 1, 0), offY + y] != 0) return 0;
-        if (mazeData[Mathf.Min(offX + x + 1, (int)lengths.x), offY + y] != 0) return 0;
-        if (mazeData[offX + x, Mathf.Max(offY + y - 1, 0)] != 0) return 0;
-        if (mazeData[offX + x, Mathf.Min(offY + y + 1, (int)lengths.y)] != 0) return 0;
+        if (mazeData[Mathf.Max(offX + x - 1, 0), offY + y] > 0) return 0;
+        if (mazeData[Mathf.Min(offX + x + 1, (int)lengths.x), offY + y] > 0) return 0;
+        if (mazeData[offX + x, Mathf.Max(offY + y - 1, 0)] > 0) return 0;
+        if (mazeData[offX + x, Mathf.Min(offY + y + 1, (int)lengths.y)] > 0) return 0;
         return -0.5f;
     }
 

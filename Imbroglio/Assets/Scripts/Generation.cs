@@ -64,6 +64,7 @@ public class Generation : MonoBehaviour
     private Node[,] pathData;
     private int[,] heights;
     private int[,] weights;
+    private int[,] decor;
     private GameObject[,] chunks;
     private Vector2 size;
     private List<Vector2> points;
@@ -76,7 +77,6 @@ public class Generation : MonoBehaviour
     void Start()
     {
         //Instantiate all chunks at start, then randomize them when needed
-        //Example: Generate all chunks when game is booted up, then randomize everytime they start a new run
         scale_1 = scale - 1;
         XZ_1 = XZ / 2;
         size = XZ * scale_1;
@@ -88,7 +88,6 @@ public class Generation : MonoBehaviour
                 chunks[i, j] = segment;
             }
         }
-
         Generate();
     }
 
@@ -100,6 +99,9 @@ public class Generation : MonoBehaviour
 
         //Assign the height values for a maze
         Mazercise();
+
+        //Setup weights before decorating to add the decoration weights
+        Weighing();
 
         //Locate valid spawns for decorations
         Decorate();
@@ -128,23 +130,6 @@ public class Generation : MonoBehaviour
     //Record pathfinding data and send to monster----------------------------------------------------------------------------------------------------
     private void Pathing()
     {
-        //Create a weight map for points based on distance from walls
-        //Include obstacles in weights
-        weights = new int[(int)size.x + 1, (int)size.y + 1];
-        for (int i = 0; i <= size.x; i++) {
-            for (int j = 0; j <= size.y; j++) {
-                int adjacentWalls = 0;
-                for (int x = -1; x < 2; x++) {
-                    int a = (int)Mathf.Clamp(i + x, 0, size.x);
-                    for (int y = -1; y < 2; y++) {
-                        int b = (int)Mathf.Clamp(j + y, 0, size.y);
-                        if (heights[a, b] > 0) adjacentWalls++;
-                    }
-                }
-                weights[i, j] = 10 * adjacentWalls;
-            }
-        }
-
         //Create nodes that line up with the height map
         pathData = new Node[(int)size.x + 1, (int)size.y + 1];
         for (int x = 0; x <= size.x; x++) {
@@ -170,40 +155,214 @@ public class Generation : MonoBehaviour
         AI.PathfindingData(pathData, scale, XZ);
     }
 
-    //All decorations have a radius of 2-------------------------------------------------------------------------------------------------------------
-    //Rails will spawn in lines 7 or more
-    //Minecart has a chance to spawn on rails or knocked over next to walls
+    //Create a weight map for points based on distance from walls
+    private void Weighing()
+    {
+        weights = new int[(int)size.x + 1, (int)size.y + 1];
+        for (int i = 0; i <= size.x; i++) {
+            for (int j = 0; j <= size.y; j++) {
+                int adjacentWalls = 0;
+                for (int x = -1; x < 2; x++) {
+                    int a = (int)Mathf.Clamp(i + x, 0, size.x);
+                    for (int y = -1; y < 2; y++) {
+                        int b = (int)Mathf.Clamp(j + y, 0, size.y);
+                        if (heights[a, b] > 0) adjacentWalls++;
+                    }
+                }
+                weights[i, j] = 10 * adjacentWalls;
+            }
+        }
+    }
+
+    //All decorations have a radius -----------------------------------------------------------------------------------------------------------------
     private void Decorate()
     {
+        decor = new int[(int)size.x + 1, (int)size.y + 1];
         for (int x = 0; x <= size.x; x++) {
             for (int y = 0; y <= size.y; y++) {
                 //Check archways Y
                 if (heights[x, y] > 0 && y + 6 <= size.y) {
-                    if (heights[x, y + 6] > 0) ArchCheckY(x, y);
+                    if (heights[x, y + 6] > 0) {
+                        if (DecorationCheck(x, y, 1, 7, 1)) {
+                            ArchCheckY(x, y);
+                        }
+                    }
                 }
                 //Check archways X
                 if (heights[x, y] > 0 && x + 6 <= size.x) {
-                    if (heights[x + 6, y] > 0) ArchCheckX(x, y);
+                    if (heights[x + 6, y] > 0) {
+                        if (DecorationCheck(x, y, 7, 1, 1)) {
+                            ArchCheckX(x, y);
+                        }
+                    }
+                }
+                //Check rails Y
+                if (heights[x,y] == 0 && y + 15 <= size.y) {
+                    if (heights[x, y + 15] == 0) {
+                        if (DecorationCheck(x, y, 5, 18, 2)) {
+                            RailCheckY(x, y);
+                        }
+                    }
+                }
+                //Check rails X
+                if (heights[x, y] == 0 && x + 15 <= size.x) {
+                    if (heights[x + 15, y] == 0) {
+                        if (DecorationCheck(x, y, 18, 5, 2)) {
+                            RailCheckX(x, y);
+                        }
+                    }
+                }
+                //Check cart area (FIX)
+                if (!DecorationCheck(x, y, 0, 0, 2)) {
+                    if (DecorationCheck(x, y, 10, 10, 4)) {
+                        CartCheck(x, y);
+                    }
                 }
             }
         }
     }
 
-    //Arch checks for cardinal gaps of entrance size
+    //Make sure decorations are not around the area
+    private bool DecorationCheck(int x, int y, int Xscale, int Yscale, int checkFor)
+    {
+        for (int i = -Xscale; i <= Xscale; i++) {
+            for (int j = -Yscale; j <= Yscale; j++) {
+                int value = decor[(int)Mathf.Clamp(x + i, 0, size.x), (int)Mathf.Clamp(y + j, 0, size.y)];
+                //1 = Arch (Odd = Arch + other)
+                if (value % 2 == checkFor) return false;
+                //2 = Rail (2 3 6 7 = Rail + other)
+                if (value % 4 - value % 2 > 0 && checkFor == 2) return false;
+                //4 = Cart (4+ = Cart + other)
+                if (value > 3 && checkFor == 4) return false;
+            }
+        }
+        return true;
+    }
+
+    //Set the decor map to decor values. Add value to point to get binary 0-7 values
+    private void DecorationSet(int x, int y, int Xscale, int Yscale, int value)
+    {
+        for (int i = -Xscale; i <= Xscale; i++) {
+            for (int j = -Yscale; j <= Yscale; j++) {
+                decor[(int)Mathf.Clamp(x + i, 0, size.x), (int)Mathf.Clamp(y + j, 0, size.y)] += value;
+            }
+        }
+    }
+
+    //Spawn given decoration
+    private void DecorationSpawn(GameObject decor, Vector3 pos, Quaternion rot)
+    {
+        Instantiate(decor, pos, rot, decorations.transform);
+    }
+
+    //Arch checks for cardinal gaps of entrance size. If all spaces between are 0, spawn
     private void ArchCheckY(int x, int y)
     {
-        for (int a = 1; a < 6; a++) if (heights[x, y + a] > 0) return;
-        float p = 2 * x - size.x - 144;
-        float q = 2 * (y + 3) - size.y;
-        Instantiate(archway, new Vector3(p, 0, q), Quaternion.identity, decorations.transform);
+        for (int a = 1; a < 6; a++) {
+            for (int b = -1; b < 2; b++) {
+                if (heights[(int)Mathf.Clamp(x + b, 0, size.x), y + a] > 0) return;
+            }
+        }
+        ArchSpawn(x, y, x, y + 6, ToWorld(x, 0, y + 3, 0, 0), Quaternion.identity);
+        DecorationSet(x, y, 1, 7, 1);
     }
 
     private void ArchCheckX(int x, int y)
     {
-        for (int a = 1; a < 6; a++) if (heights[x + a, y] > 0) return;
-        float p = 2 * (x + 3) - size.x - 144;
-        float q = 2 * y - size.y;
-        Instantiate(archway, new Vector3(p, 0, q), new Quaternion(0, 0.5f, 0, 0.5f), decorations.transform);
+        for (int a = 1; a < 6; a++) {
+            for (int b = -1; b < 2; b++) {
+                if (heights[x + a, (int)Mathf.Clamp(y + b, 0, size.y)] > 0) return;
+            }
+        }
+        ArchSpawn(x, y, x + 6, y, ToWorld(x + 3, 0, y, 0, 0), new Quaternion(0, 0.5f, 0, 0.5f));
+        DecorationSet(x, y, 7, 1, 1);
+    }
+
+    //Spawn arch and add to weights
+    private void ArchSpawn(int x, int y, int x2, int y2, Vector3 pos, Quaternion rot)
+    {
+        DecorationSpawn(archway, pos, rot);
+        weights[x, y] += 14;
+        weights[x2, y2] += 14;
+    }
+
+    //Rail checks for straight paths of 15 0s with 2 gaps
+    private void RailCheckY(int x, int y)
+    {
+        for (int a = 1; a < 15; a++) {
+            for (int b = -2; b < 3; b++) {
+                if (heights[(int)Mathf.Clamp(x + b, 0, size.x), y + a] > 0) return;
+            }
+        }
+        for (int a = 0; a <= 16; a+=4) {
+            if (Random.Range(0, 4) != 0) {
+                RailSpawn(x, y + a, 0, 1, ToWorld(x, 0, y + 1, 0, a), Quaternion.identity);
+                DecorationSet(x, y + a / 2, 0, 1, 2);
+            }
+        }
+        //DecorationSet(x, y, 0, 15, 2);
+    }
+
+    private void RailCheckX(int x, int y)
+    {
+        for (int a = 1; a < 15; a++) {
+            for (int b = -2; b < 3; b++) {
+                if (heights[x + a, (int)Mathf.Clamp(y + b, 0, size.y)] > 0) return;
+            }
+        }
+        for (int a = 0; a <= 16; a+=4) {
+            if (Random.Range(0, 4) != 0) {
+                RailSpawn(x + a, y, 1, 0, ToWorld(x + 1, 0, y, a, 0), new Quaternion(0, 0.5f, 0, 0.5f));
+                DecorationSet(x + a / 2, y, 1, 0, 2);
+            }
+        }
+        //DecorationSet(x, y, 15, 0, 2);
+    }
+
+    //Spawn rails and add to weights
+    private void RailSpawn(int x, int y, int x2, int y2, Vector3 pos, Quaternion rot)
+    {
+        DecorationSpawn(railroad, pos, rot);
+        weights[Mathf.Max(x - x2, 0), Mathf.Max(y - y2, 0)] += 7;
+        weights[x, y] += 7;
+        weights[x + x2, y + y2] += 7;
+    }
+
+    //Cart checks for rails or a position close to walls
+    private void CartCheck(int x, int y)
+    {
+        for (int a = -1; a < 2; a++) {
+            for (int b = -1; b < 2; b++) {
+                if (heights[(int)Mathf.Clamp(x + a, 0, size.x), (int)Mathf.Clamp(y + b, 0, size.y)] > 0) return;
+            }
+        }
+        if (!DecorationCheck(x, y, 0, 0, 2)) {
+            if (!DecorationCheck(x, y + 1, 0, 0, 2) || !DecorationCheck(x, y - 1, 0, 0, 2)) {
+                CartSpawn(x, y, ToWorld(x, 0.875f, y, 0, 0), Quaternion.identity);
+            } else {
+                CartSpawn(x, y, ToWorld(x, 0.875f, y, 0, 0), new Quaternion(0, 0.5f, 0, 0.5f));
+            }
+        }
+        DecorationSet(x, y, 0, 0, 4);
+    }
+
+    //Spawn cart
+    private void CartSpawn(int x, int y, Vector3 pos, Quaternion rot)
+    {
+        DecorationSpawn(minecart, pos, rot);
+        for (int a = -1; a < 2; a++) {
+            for (int b = -1; b < 2; b++) {
+                if (x + a > 0 && x + a < size.x && y + b > 0 && y + b < size.y) weights[x + a, y + b] += 10;
+            }
+        }
+    }
+
+    //Return grid to world vector3
+    private Vector3 ToWorld(float x, float y, float z, int addX, int addY)
+    {
+        x = 2 * x - size.x - 144 + addX;
+        z = 2 * z - size.y + addY;
+        return new Vector3(x, y, z);
     }
 
     //Prim Maze algorithm----------------------------------------------------------------------------------------------------------------------------
