@@ -172,6 +172,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5335366480747461314}
   - component: {fileID: 887517138237312435}
+  - component: {fileID: 7315310622554075841}
   m_Layer: 0
   m_Name: Railroad
   m_TagString: Untagged
@@ -223,6 +224,19 @@ LODGroup:
     renderers:
     - renderer: {fileID: 7972860189285076816}
   m_Enabled: 1
+--- !u!65 &7315310622554075841
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4701994574783586424}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 2, y: 0.25, z: 3.9}
+  m_Center: {x: 0, y: 0.2, z: 0}
 --- !u!1 &7507910319006036874
 GameObject:
   m_ObjectHideFlags: 0
