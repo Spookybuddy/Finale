@@ -6,14 +6,12 @@ using System.Diagnostics;
 public class MonsterMash : MonoBehaviour
 {
     public Rigidbody rigid;
-
     public GameObject tracking;
     private Movit player;
     public GameObject worm;
-
+    public GameObject dig;
     public int health;
     public bool hunting;
-    public bool itemHit;
     public bool searching;
     public float itemDistance;
     public float playerThreshold = 0.2f;
@@ -21,19 +19,18 @@ public class MonsterMash : MonoBehaviour
 
     private bool move;
     private float spd;
-
     private bool attacking;
 
     private AudioSource sounds;
     public AudioClip[] growls;
     private bool doNoise;
-
+    private Vector3 last;
+    private GameObject hold;
     private Node[,] mazeData;
     private Vector2 scale;
     private int size;
     public List<Vector3> path = new List<Vector3>();
     public LineRenderer line;
-
     private float pan;
     private const float HALFPI = 1.57079632679489662f;
     private const float INVERSE = 57.29577951308232087f;
@@ -47,6 +44,7 @@ public class MonsterMash : MonoBehaviour
         attacking = false;
         health = 91;
         StartCoroutine(noises());
+        last = Vector3.zero;
     }
 
     void Update()
@@ -58,6 +56,9 @@ public class MonsterMash : MonoBehaviour
             line.positionCount = path.Count;
             line.SetPositions(path.ToArray());
         }
+
+        //Attack Debug
+        if (Input.GetKeyDown(KeyCode.T)) Instantiate(worm, new Vector3(35, -5, 0), transform.rotation);
 
         //Stop when killed
         if (health <= 0) move = false;
@@ -85,16 +86,6 @@ public class MonsterMash : MonoBehaviour
                 }
             }
 
-            //Calc thrown sound based on distance
-            if (itemHit) {
-                if (itemDistance > playerThreshold) {
-                    hunting = false;
-                    searching = true;
-                } else {
-                    itemHit = false;
-                }
-            }
-
             //When reaching the target position
             if (Vector3.Distance(transform.position, goTowards) < 1.5 && !attacking) {
                 float range = (scale.x * (size - 1));
@@ -103,14 +94,13 @@ public class MonsterMash : MonoBehaviour
                 attacking = true;
                 searching = false;
                 hunting = false;
-                itemHit = false;
 
                 //Worm bite
                 GameObject[] heads = GameObject.FindGameObjectsWithTag("Worm");
                 foreach (GameObject head in heads) {
                     Destroy(head);
                 }
-                Instantiate(worm, new Vector3(transform.position.x, -12, transform.position.z), transform.rotation);
+                Instantiate(worm, new Vector3(transform.position.x, -5, transform.position.z), transform.rotation);
             }
 
             //Attack here
@@ -127,6 +117,15 @@ public class MonsterMash : MonoBehaviour
                 sounds.PlayOneShot(growls[Random.Range(0, growls.Length)], Mathf.Clamp01(12 / toPlayer - 0.15f));
                 doNoise = false;
                 StartCoroutine(noises());
+            }
+
+            //Digging effect
+            if (Vector3.Distance(transform.position, last) > 0.6f && move) {
+                last = transform.position;
+                float rando = Random.Range(0.0f, 0.9f);
+                if (hold != null) hold.GetComponent<Rigidbody>().isKinematic = false;
+                hold = Instantiate(dig, new Vector3(transform.position.x, -0.4f, transform.position.z), new Quaternion(0, rando, 0, 1 - rando)) as GameObject;
+                hold.GetComponent<Rigidbody>().isKinematic = true;
             }
 
             //Move towards path[0] until distance < 0.5, then remove point and move towards next
