@@ -68,7 +68,6 @@ public class Generation : MonoBehaviour
     private GameObject[,] chunks;
     private Vector2 size;
     private List<Vector2> points;
-
     public GameObject decorations;
     public GameObject archway;
     public GameObject railroad;
@@ -178,6 +177,7 @@ public class Generation : MonoBehaviour
     private void Decorate()
     {
         decor = new int[(int)size.x + 1, (int)size.y + 1];
+        DecorationSet((int)size.x / 2, (int)size.y - 1, 7, 1, 1);
         for (int x = 0; x <= size.x; x++) {
             for (int y = 0; y <= size.y; y++) {
                 //Check archways Y
