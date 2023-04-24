@@ -21,7 +21,6 @@ public class Caving : MonoBehaviour
 
     private Mesh cave;
     private Mesh overlay;
-    private Mesh ceiling;
     private Vector3[] VERTs;
     private Vector3[] UERTs;
     private int[] TRIs;
@@ -36,12 +35,16 @@ public class Caving : MonoBehaviour
         overlay = new Mesh();
     }
 
-    public void NewMesh(int size, Vector2 lengths, int[,] maze)
+    public void NewCliff(int size, Vector2 lengths, int[,] noise)
     {
-        //Check if the mesh exists
-        if (cave == null) cave = new Mesh();
-        if (overlay == null) overlay = new Mesh();
+        scale = size;
+        mazeData = noise;
 
+        NewMesh(lengths, false);
+    }
+
+    public void NewCave(int size, Vector2 lengths, int[,] maze)
+    {
         scale = size;
         mazeData = maze;
 
@@ -49,31 +52,22 @@ public class Caving : MonoBehaviour
         tile.transform.localPosition = new Vector3((scale - 1) / 2f, 0, (scale - 1) / 2f);
         tile.transform.localScale = new Vector3((scale - 1), (scale - 1), 1);
 
+        NewMesh(lengths, true);
+    }
+
+    public void NewMesh(Vector2 lengths, bool use)
+    {
+        //Check if the mesh exists
+        if (cave == null) cave = new Mesh();
+        if (overlay == null) overlay = new Mesh();
+
         //Verts & UVs because they are the same size
         VERTs = new Vector3[scale * scale + (scale - 1) * (scale - 1)];
         UERTs = new Vector3[VERTs.Length];
         UVs = new Vector2[VERTs.Length];
         VVs = new Vector2[VERTs.Length];
-        for (int i = 0; i < scale; i++) {
-            for (int j = 0; j < scale; j++) {
-                int index = Indices(i, j);
-                VERTs[index] = new Vector3(i, AverageDepth(i, j, lengths), j);
-                UERTs[index] = new Vector3(i, 0, j);
-                UVs[index] = new Vector2((float)i / scale, (float)j / scale);
-                VVs[index] = new Vector2(i % 2, 0);
-            }
-        }
-
-        //Loop through secondary points to average point heights with surroundings
-        for (int i = 0; i < (scale - 1); i++) {
-            for (int j = 0; j < (scale - 1); j++) {
-                int index = scale * (i + 1) + (scale - 1) * i + j;
-                VERTs[index] = new Vector3(i + 0.5f, AverageDepth(index) + Random.Range(-0.2f, 0.2f), j + 0.5f);
-                UERTs[index] = new Vector3(i + 0.5f, 0, j + 0.5f);
-                UVs[index] = new Vector2((i + 0.5f) / scale, (j + 0.5f) / scale);
-                VVs[index] = new Vector2(0.5f, 0);
-            }
-        }
+        Vertex(lengths, use);
+        Vertex2(use);
 
         //Tris
         TRIs = new int[(scale - 1) * (scale - 1) * 12];
@@ -136,6 +130,14 @@ public class Caving : MonoBehaviour
         else return Mathf.Ceil(value) / 4;
     }
 
+    //Outside mesh has different limits
+    private float AverageDepth(int index, bool clamp)
+    {
+        if (clamp) return AverageDepth(index);
+        float value = VERTs[index - scale].y + VERTs[index - scale + 1].y + VERTs[index + scale - 1].y + VERTs[index + scale].y;
+        return (Mathf.Floor(value) / 2) / 2;
+    }
+
     //Get adjacent maze vertex heights to see if point should be lowered
     private float AverageDepth(int x, int y, Vector2 lengths)
     {
@@ -151,13 +153,19 @@ public class Caving : MonoBehaviour
         return -0.5f;
     }
 
+    //Get adjacent points, but for the outside section
+    private float AverageDepth(int x, int y, bool overload)
+    {
+        return -0.5f;
+    }
+
     //Index factoring in the midpoints
     private int Indices(int i, int j)
     {
         return (i * (scale - 1)) + (i * scale) + j;
     }
 
-    //Assign Triangles for only wall sections
+    //Assign Triangles
     private void Triangles(int index, int iteration, int[] cardinals, int vertex)
     {
         //Render tris only if the y > 0
@@ -187,5 +195,34 @@ public class Caving : MonoBehaviour
 
         //Recursion because I'm fancy like that
         if (iteration + 1 < 4) Triangles(index + 3, iteration + 1, cardinals, vertex);
+    }
+
+    //Only lower if in cave
+    private void Vertex(Vector2 lengths, bool use)
+    {
+        for (int i = 0; i < scale; i++) {
+            for (int j = 0; j < scale; j++) {
+                int index = Indices(i, j);
+                VERTs[index] = new Vector3(i, use ? AverageDepth(i, j, lengths) : AverageDepth(i, j, use), j);
+                UERTs[index] = new Vector3(i, 0, j);
+                UVs[index] = new Vector2((float)i / scale, (float)j / scale);
+                VVs[index] = new Vector2(i % 2, 0);
+            }
+        }
+    }
+
+    //Loop through secondary points to average point heights with surroundings
+    private void Vertex2(bool use)
+    {
+        for (int i = 0; i < (scale - 1); i++) {
+            for (int j = 0; j < (scale - 1); j++) {
+                int index = scale * (i + 1) + (scale - 1) * i + j;
+                float height = AverageDepth(index, use) + Random.Range(-0.2f, 0.2f);
+                VERTs[index] = new Vector3(i + 0.5f, height, j + 0.5f);
+                UERTs[index] = new Vector3(i + 0.5f, 0, j + 0.5f);
+                UVs[index] = new Vector2((i + 0.5f) / scale, (j + 0.5f) / scale);
+                VVs[index] = new Vector2(0.5f, 0);
+            }
+        }
     }
 }
