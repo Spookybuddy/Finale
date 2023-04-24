@@ -60,12 +60,14 @@ public class Generation : MonoBehaviour
     public int entranceSize;
     public Transform StartingArea;
     public GameObject ChunkPrefab;
+    public GameObject OuterPrefab;
     public MonsterMash AI;
     private Node[,] pathData;
     private int[,] heights;
     private int[,] weights;
     private int[,] decor;
     private GameObject[,] chunks;
+    private GameObject[] exterior;
     private Vector2 size;
     private List<Vector2> points;
     public GameObject decorations;
@@ -80,12 +82,14 @@ public class Generation : MonoBehaviour
         XZ_1 = XZ / 2;
         size = XZ * scale_1;
         chunks = new GameObject[(int)XZ.x, (int)XZ.y];
+        exterior = new GameObject[(int)XZ.x];
         for (int i = 0; i < XZ.x; i++) {
             for (int j = 0; j < XZ.y; j++) {
                 Vector3 pos = new Vector3((i * scale_1) - (XZ_1.x * scale_1) + transform.position.x, 0, (j * scale_1) - (XZ_1.y * scale_1) + transform.position.z);
-                GameObject segment = Instantiate(ChunkPrefab, pos, Quaternion.identity, transform) as GameObject;
-                chunks[i, j] = segment;
+                chunks[i, j] = Instantiate(ChunkPrefab, pos, Quaternion.identity, transform) as GameObject;
             }
+            Vector3 outer = new Vector3((scale_1 * XZ_1.y) + transform.position.x, 0, (i * scale_1) - (XZ_1.x * scale_1) + transform.position.z);
+            exterior[i] = Instantiate(OuterPrefab, outer, Quaternion.identity, transform) as GameObject;
         }
         Generate();
     }
@@ -96,13 +100,9 @@ public class Generation : MonoBehaviour
         //Shrink to generate in scale, size up later
         transform.localScale = new Vector3(1, 1, 1);
 
-        //Assign the height values for a maze
+        //Assign the height values for a maze, Weigh the base values, the add decor and add their weight
         Mazercise();
-
-        //Setup weights before decorating to add the decoration weights
         Weighing();
-
-        //Locate valid spawns for decorations
         Decorate();
 
         //Entrance hole
@@ -112,12 +112,13 @@ public class Generation : MonoBehaviour
             }
         }
 
-        //Generate the meshes
+        //Generate the meshes, both inside and out
         for (int i = 0; i < XZ.x; i++) {
             for (int j = 0; j < XZ.y; j++) {
-                chunks[i, j].GetComponent<Caving>().NewMesh(scale, size, heights);
+                chunks[i, j].GetComponent<Caving>().NewCave(scale, size, heights);
             }
         }
+        Outside();
 
         //AI
         Pathing();
@@ -512,5 +513,20 @@ public class Generation : MonoBehaviour
     void CreatePoint(Vector2 point)
     {
         if (!points.Contains(point)) points.Add(point);
+    }
+
+    //Natural mountain outside in the style of the interior
+    private void Outside()
+    {
+        int[,] noise = new int[scale, (int)size.x];
+        for (int i = 0; i < scale; i++) {
+            for (int j = 0; j < size.x; j++) {
+                noise[i, j] = 0;
+            }
+        }
+        
+        for (int i = 0; i < XZ.x; i++) {
+            exterior[i].GetComponent<Caving>().NewCliff(scale, new Vector2(size.x, 0), noise);
+        }
     }
 }
