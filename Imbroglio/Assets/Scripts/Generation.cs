@@ -58,9 +58,9 @@ public class Generation : MonoBehaviour
     public Vector2 XZ;
     private Vector2 XZ_1;
     public int entranceSize;
-    public Transform StartingArea;
     public GameObject ChunkPrefab;
     public GameObject OuterPrefab;
+    public GameObject UpperPrefab;
     public MonsterMash AI;
     private Node[,] pathData;
     private int[,] heights;
@@ -68,6 +68,7 @@ public class Generation : MonoBehaviour
     private int[,] decor;
     private GameObject[,] chunks;
     private GameObject[] exterior;
+    private GameObject[] clifftop;
     private Vector2 size;
     private List<Vector2> points;
     public GameObject decorations;
@@ -83,6 +84,7 @@ public class Generation : MonoBehaviour
         size = XZ * scale_1;
         chunks = new GameObject[(int)XZ.x, (int)XZ.y];
         exterior = new GameObject[(int)XZ.x];
+        clifftop = new GameObject[exterior.Length];
         for (int i = 0; i < XZ.x; i++) {
             for (int j = 0; j < XZ.y; j++) {
                 Vector3 pos = new Vector3((i * scale_1) - (XZ_1.x * scale_1) + transform.position.x, 0, (j * scale_1) - (XZ_1.y * scale_1) + transform.position.z);
@@ -90,6 +92,7 @@ public class Generation : MonoBehaviour
             }
             Vector3 outer = new Vector3((scale_1 * XZ_1.y) + transform.position.x, 0, (i * scale_1) - (XZ_1.x * scale_1) + transform.position.z);
             exterior[i] = Instantiate(OuterPrefab, outer, Quaternion.identity, transform) as GameObject;
+            clifftop[i] = Instantiate(UpperPrefab, outer + new Vector3(-scale_1, 3.25f, 0), Quaternion.identity, transform) as GameObject;
         }
         Generate();
     }
@@ -519,17 +522,27 @@ public class Generation : MonoBehaviour
     private void Outside()
     {
         int[,] noise = new int[scale, (int)size.x + 1];
+        int[,] extra = new int[scale, (int)size.x + 1];
+        float rando = Random.Range(-99.9f, 99.9f);
         for (int i = 0; i < scale; i++) {
             for (int j = 0; j <= size.x; j++) {
                 float x = Mathf.Pow(j - size.x / 2, 2) / Mathf.Pow(size.x / 2, 2) + 0.5f;
-                if (j - Mathf.CeilToInt(entranceSize / 2) <= size.x / 2 && j + Mathf.FloorToInt(entranceSize / 2) >= size.x / 2) x = -1;
                 float y = 2f / (i + 1) - 0.5f;
-                noise[i, j] = (int)(x + y);
+                extra[i, j] = Mathf.RoundToInt(y + Perlin(i, j, rando) * (4 * y + 1.4f));
+                noise[i, j] = Mathf.RoundToInt(x + y + Perlin(i, j, -rando) * (i / -2.5f + 1.5f));
+                if (j - Mathf.CeilToInt(entranceSize / 2) <= size.x / 2 && j + Mathf.FloorToInt(entranceSize / 2) >= size.x / 2) noise[i, j] = 0;
             }
         }
 
         for (int i = 0; i < XZ.x; i++) {
-            exterior[i].GetComponent<Caving>().NewCliff(scale, new Vector2(0, size.y), noise);
+            exterior[i].GetComponent<Caving>().NewCliff(scale, new Vector2(0, size.x), noise);
+            clifftop[i].GetComponent<Caving>().NewCliff(scale, new Vector2(0, size.x), extra);
         }
+    }
+
+    //Return perlin noise
+    private float Perlin(int i, int j, float rando)
+    {
+        return Mathf.PerlinNoise((float)i / scale + rando, (float)j / scale + rando);
     }
 }
