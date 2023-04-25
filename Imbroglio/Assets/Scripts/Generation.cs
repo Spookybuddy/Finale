@@ -518,15 +518,18 @@ public class Generation : MonoBehaviour
     //Natural mountain outside in the style of the interior
     private void Outside()
     {
-        int[,] noise = new int[scale, (int)size.x];
+        int[,] noise = new int[scale, (int)size.x + 1];
         for (int i = 0; i < scale; i++) {
-            for (int j = 0; j < size.x; j++) {
-                noise[i, j] = 0;
+            for (int j = 0; j <= size.x; j++) {
+                float x = Mathf.Pow(j - size.x / 2, 2) / Mathf.Pow(size.x / 2, 2) + 0.5f;
+                if (j - Mathf.CeilToInt(entranceSize / 2) <= size.x / 2 && j + Mathf.FloorToInt(entranceSize / 2) >= size.x / 2) x = -1;
+                float y = 2f / (i + 1) - 0.5f;
+                noise[i, j] = (int)(x + y);
             }
         }
-        
+
         for (int i = 0; i < XZ.x; i++) {
-            exterior[i].GetComponent<Caving>().NewCliff(scale, new Vector2(size.x, 0), noise);
+            exterior[i].GetComponent<Caving>().NewCliff(scale, new Vector2(0, size.y), noise);
         }
     }
 }
