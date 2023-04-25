@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44657826, g: 0.49641263, b: 0.57481676, a: 1}
+  m_IndirectSpecularColor: {r: 0.37311918, g: 0.3807398, b: 0.35872716, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -1003,7 +1003,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!108 &275660016
 Light:
   m_ObjectHideFlags: 0
@@ -1983,9 +1983,9 @@ MonoBehaviour:
   scale: 8
   XZ: {x: 24, y: 24}
   entranceSize: 5
-  StartingArea: {fileID: 1675463524}
   ChunkPrefab: {fileID: 5397370129300439948, guid: c9d93d3e4faa01a40bfcb9aa2403e544, type: 3}
   OuterPrefab: {fileID: 8998962327117610369, guid: cf8473bac5fe7d14084ffe161cd1e337, type: 3}
+  UpperPrefab: {fileID: 7749313708525289355, guid: aa4d880b336e26042b77e38f437bb758, type: 3}
   AI: {fileID: 1910090556}
   decorations: {fileID: 2063875408}
   archway: {fileID: 3161362043574747993, guid: 4ffda7445a1e6c547bc9e9f8ee873c50, type: 3}
@@ -3263,7 +3263,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 10
+  m_RootOrder: 9
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &751996450
 GameObject:
@@ -4313,7 +4313,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1043186533}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 96, y: -0.1, z: 0}
+  m_LocalPosition: {x: 91, y: -0.1, z: 0}
   m_LocalScale: {x: 12.5, y: 1, z: 20}
   m_Children:
   - {fileID: 540107972}
@@ -6220,36 +6220,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1653880320}
   m_CullTransparentMesh: 1
---- !u!1 &1675463523
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1675463524}
-  m_Layer: 0
-  m_Name: StartChunk
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 4294967295
-  m_IsActive: 1
---- !u!4 &1675463524
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1675463523}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 9
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1700458644
 GameObject:
   m_ObjectHideFlags: 0
@@ -6468,9 +6438,17 @@ PrefabInstance:
       value: 4294967295
       objectReference: {fileID: 0}
     - target: {fileID: -246067183904942284, guid: 787f8207a11500842b356c85d8c57287, type: 3}
+      propertyPath: m_ScaleInLightmap
+      value: 1.0342742
+      objectReference: {fileID: 0}
+    - target: {fileID: -246067183904942284, guid: 787f8207a11500842b356c85d8c57287, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: bd2bedff9225deb44b09bb0cc7deee3c, type: 2}
+    - target: {fileID: 892244301625820357, guid: 787f8207a11500842b356c85d8c57287, type: 3}
+      propertyPath: m_ScaleInLightmap
+      value: 1.5853808
+      objectReference: {fileID: 0}
     - target: {fileID: 892244301625820357, guid: 787f8207a11500842b356c85d8c57287, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
@@ -6518,6 +6496,10 @@ PrefabInstance:
     - target: {fileID: 4742473837712756890, guid: 787f8207a11500842b356c85d8c57287, type: 3}
       propertyPath: m_LODs.Array.data[3].screenRelativeHeight
       value: 0.07543087
+      objectReference: {fileID: 0}
+    - target: {fileID: 7472144831211818996, guid: 787f8207a11500842b356c85d8c57287, type: 3}
+      propertyPath: m_ScaleInLightmap
+      value: 0.6629797
       objectReference: {fileID: 0}
     - target: {fileID: 7472144831211818996, guid: 787f8207a11500842b356c85d8c57287, type: 3}
       propertyPath: m_Materials.Array.data[0]
@@ -8014,7 +7996,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 11
+  m_RootOrder: 10
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2084801578
 GameObject:

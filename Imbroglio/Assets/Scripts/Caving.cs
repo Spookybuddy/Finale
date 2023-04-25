@@ -133,7 +133,7 @@ public class Caving : MonoBehaviour
     //Outside mesh has different limits
     private float AverageDepth(int index, bool clamp)
     {
-        if (clamp) return AverageDepth(index);
+        if (clamp) return AverageDepth(index) + Random.Range(-0.2f, 0.2f);
         float value = VERTs[index - scale].y + VERTs[index - scale + 1].y + VERTs[index + scale - 1].y + VERTs[index + scale].y;
         return (Mathf.Floor(value) / 2) / 2;
     }
@@ -154,10 +154,16 @@ public class Caving : MonoBehaviour
     }
 
     //Get adjacent points, but for the outside section
-    private float AverageDepth(int x, int y, bool overload)
+    private float AverageDepth(int x, int y, Vector2 lengths, bool overload)
     {
-        int offZ = (int)(transform.localPosition.z + 84);
-        return mazeData[x, y + offZ];
+        int offZ = (int)(transform.localPosition.z + lengths.y / 2);
+        if (mazeData[x, y + offZ] > 1) return 2.5f;
+        if (mazeData[x, y + offZ] > 0) return mazeData[x, y + offZ];
+        if (mazeData[Mathf.Max(x - 1, 0), y + offZ] > 0) return mazeData[x, y + offZ];
+        if (mazeData[Mathf.Min(x + 1, scale - 1), y + offZ] > 0) return mazeData[x, y + offZ];
+        if (mazeData[x, Mathf.Max(y + offZ - 1, 0)] > 0) return mazeData[x, y + offZ];
+        if (mazeData[x, Mathf.Min(y + offZ + 1, (int)lengths.y)] > 0) return mazeData[x, y + offZ];
+        return Mathf.Round(x * x / -scale) / scale;
     }
 
     //Index factoring in the midpoints
@@ -204,7 +210,7 @@ public class Caving : MonoBehaviour
         for (int i = 0; i < scale; i++) {
             for (int j = 0; j < scale; j++) {
                 int index = Indices(i, j);
-                VERTs[index] = new Vector3(i, use ? AverageDepth(i, j, lengths) : AverageDepth(i, j, use), j);
+                VERTs[index] = new Vector3(i, use ? AverageDepth(i, j, lengths) : AverageDepth(i, j, lengths, use), j);
                 UERTs[index] = new Vector3(i, 0, j);
                 UVs[index] = new Vector2((float)i / scale, (float)j / scale);
                 VVs[index] = new Vector2(i % 2, 0);
@@ -218,7 +224,7 @@ public class Caving : MonoBehaviour
         for (int i = 0; i < (scale - 1); i++) {
             for (int j = 0; j < (scale - 1); j++) {
                 int index = scale * (i + 1) + (scale - 1) * i + j;
-                float height = AverageDepth(index, use) + Random.Range(-0.2f, 0.2f);
+                float height = AverageDepth(index, use);
                 VERTs[index] = new Vector3(i + 0.5f, height, j + 0.5f);
                 UERTs[index] = new Vector3(i + 0.5f, 0, j + 0.5f);
                 UVs[index] = new Vector2((i + 0.5f) / scale, (j + 0.5f) / scale);
