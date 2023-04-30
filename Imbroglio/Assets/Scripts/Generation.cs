@@ -304,7 +304,6 @@ public class Generation : MonoBehaviour
                 DecorationSet(x, y + a / 2, 0, 1, 2);
             }
         }
-        //DecorationSet(x, y, 0, 15, 2);
     }
 
     private void RailCheckX(int x, int y)
@@ -320,7 +319,6 @@ public class Generation : MonoBehaviour
                 DecorationSet(x + a / 2, y, 1, 0, 2);
             }
         }
-        //DecorationSet(x, y, 15, 0, 2);
     }
 
     //Spawn rails and add to weights
@@ -329,7 +327,7 @@ public class Generation : MonoBehaviour
         DecorationSpawn(railroad, pos, rot);
         weights[Mathf.Max(x - x2, 0), Mathf.Max(y - y2, 0)] += 7;
         weights[x, y] += 7;
-        weights[x + x2, y + y2] += 7;
+        weights[(int)Mathf.Min(x + x2, size.x), (int)Mathf.Min(y + y2, size.y)] += 7;
     }
 
     //Cart checks for rails or a position close to walls
