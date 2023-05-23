@@ -13,6 +13,7 @@ TagManager:
   - Chunk
   - Decor
   - Monster
+  - Cave
   layers:
   - Default
   - TransparentFX

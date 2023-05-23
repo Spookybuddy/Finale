@@ -177,6 +177,7 @@ public class Generation : MonoBehaviour
         }
     }
 
+    //Optimize this whole mess of decoration spawning
     //All decorations have a radius -----------------------------------------------------------------------------------------------------------------
     private void Decorate()
     {
@@ -368,7 +369,7 @@ public class Generation : MonoBehaviour
     }
 
     //Prim Maze algorithm----------------------------------------------------------------------------------------------------------------------------
-    //Code from https://kairumagames.com/blog/cavetutorial
+    //Code tutorial from https://kairumagames.com/blog/cavetutorial
     private void Mazercise()
     {
         //Start with all points as walls

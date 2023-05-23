@@ -8,7 +8,6 @@ public class Movit : MonoBehaviour
     private float turn;
     private float strafe;
     private float advance;
-    public float stepping;
 
     private Rigidbody rigid;
     private float veloCap;
@@ -16,14 +15,12 @@ public class Movit : MonoBehaviour
     public List<GameObject> inventory;
     public GameObject bottlePrefab;
     public GameObject rockPrefab;
-
     public GameObject markerPrefab;
+    public Transform spawnThrow;
     public int markers;
 
     private bool yeetIt;
     private bool placed;
-    public bool byCar;
-    public int numSaved;
     private bool menuLag;
 
     public bool menuUp;
@@ -35,7 +32,8 @@ public class Movit : MonoBehaviour
     public bool storyMenu;
 
     public bool interactRange;
-    public bool talkingRange;
+    private bool inCave;
+    private Vector3 markPoint;
 
     private Mousing lookingAt;
     private MonsterMash monster;
@@ -44,8 +42,8 @@ public class Movit : MonoBehaviour
 
     void Start()
     {
-        lookingAt = GameObject.Find("Main Camera").GetComponent<Mousing>();
-        monster = GameObject.Find("Periscope").GetComponent<MonsterMash>();
+        lookingAt = GameObject.FindWithTag("MainCamera").GetComponent<Mousing>();
+        monster = GameObject.FindWithTag("Monster").GetComponent<MonsterMash>();
         rigid = GetComponent<Rigidbody>();
         yeetIt = true;
         placed = false;
@@ -59,7 +57,6 @@ public class Movit : MonoBehaviour
         victory = false;
         failure = false;
         playerSoundLevel = 0.0f;
-        numSaved = 0;
     }
 
     void Update()
@@ -113,7 +110,7 @@ public class Movit : MonoBehaviour
 
         if (!menuUp) {
             //Mouse Camera (Left/Right)
-            turn = Input.GetAxis("Mouse X")/2;
+            turn = Input.GetAxis("Mouse X") / 2;
             transform.Rotate(Vector3.up, turn);
 
             //Strafing
@@ -143,12 +140,7 @@ public class Movit : MonoBehaviour
                 StartCoroutine(yeetDelay());
 
                 //Spawn item based on direction looking both horizontal & vertical
-                //Change to just relative transform lol
-                float waves = (3.1415926f * transform.eulerAngles.y / 180);
-                Vector3 spawnAt = new Vector3(1.3f * Mathf.Sin(waves), -Mathf.Sin(lookingAt.looks), 1.3f * Mathf.Cos(waves));
-                Instantiate(inventory[0], transform.position + spawnAt, transform.rotation);
-
-                //Remove thrown item from inventory
+                Instantiate(inventory[0], spawnThrow.position, transform.rotation);
                 inventory.RemoveAt(0);
             }
 
@@ -157,72 +149,48 @@ public class Movit : MonoBehaviour
                 placed = true;
                 StartCoroutine(markerDelay());
 
-                //Spawn a lantern on the floor in front of player
-                float waves = (3.14159f * transform.eulerAngles.y / 180);
-                Vector3 spawnAt = new Vector3(1.7f * Mathf.Sin(waves), -1.25f, 1.7f * Mathf.Cos(waves));
-                Instantiate(markerPrefab, transform.position + spawnAt, transform.rotation);
-                markers += 1;
+                //Spawn a lantern from ceiling if in cave
+                if (inCave) {
+                    Instantiate(markerPrefab, markPoint, transform.rotation);
+                    markers += 1;
+                }
             }
 
-            //Interact with environment (Pick up item / Talk to NPC)
+            //Victory if worm is dead
+            if (monster.health <= 0) {
+                victory = true;
+                menuUp = true;
+            }
+
+            //Interact with environment
             if (Input.GetKeyDown(KeyCode.E) || Input.GetAxis("Interact") > 0) {
-                if (byCar) {
-                    //Victory if saved 2 people
-                    if (numSaved == 2) {
-                        victory = true;
-                        menuUp = true;
-                    }
-
-                    //Remove all npcs
-                    GameObject[] npcs = GameObject.FindGameObjectsWithTag("Saved");
-                    if (npcs.Length > 0) {
-                        Destroy(npcs[0]);
-                        numSaved += 1;
-                    }
-                    byCar = false;
-                    StartCoroutine(npcDelay());
-
-                    //Victory if worm is dead
-                    if (monster.health <= 0) {
-                        victory = true;
-                        menuUp = true;
-                    }
-                }
                 GameObject[] throwables = GameObject.FindGameObjectsWithTag("Throwable");
                 foreach (GameObject item in throwables) {
                     //Find distance to player and pickup if within reach
-                    float dist = Mathf.Sqrt(Mathf.Pow(transform.position.x - item.transform.position.x, 2) + Mathf.Pow(transform.position.z - item.transform.position.z, 2));
-                    if (dist < 2) {
-                        //Add the prefab for the respective item (Because you can't just add the item and then destroy it, so this is my workaround)
-                        if (item.name == "Rock(Clone)") {
-                            inventory.Add(rockPrefab);
-                        } else if (item.name == "Bottle(Clone)") {
-                            inventory.Add(bottlePrefab);
-                        }
+                    if (Vector3.Distance(item.transform.position, transform.position) < 2.5f) {
+                        inventory.Add(item.name == "Rock(Clone)" ? rockPrefab : bottlePrefab);
                         Destroy(item);
-                        interactRange = false;
                     }
                 }
             }
         }
     }
 
-    //While within car radius player can leave
+    //Check if in cave
+    void FixedUpdate()
+    {
+        if (Physics.Raycast(transform.position, Vector3.up, out RaycastHit hit, 4)) {
+            inCave = hit.collider.CompareTag("Cave");
+            markPoint = hit.point;
+        } else { inCave = false; }
+    }
+
+    //Eaten by worm
     void OnTriggerEnter(Collider collider)
     {
-        if (collider.gameObject.CompareTag("Finish")) {
-            byCar = true;
-        }
         if (collider.gameObject.CompareTag("Worm")) {
             failure = true;
             menuUp = true;
-        }
-        if (collider.gameObject.CompareTag("Throwable")) {
-            interactRange = true;
-        }
-        if (collider.gameObject.CompareTag("NPC"))
-        {
-            talkingRange = true;
         }
     }
 
@@ -232,16 +200,6 @@ public class Movit : MonoBehaviour
             failure = true;
             menuUp = true;
         }
-    }
-
-    //When leave car radius
-    void OnTriggerExit(Collider collider)
-    {
-        if (collider.gameObject.CompareTag("Finish")) {
-            byCar = false;
-        }
-        interactRange = false;
-        talkingRange = false;
     }
 
     //Throw reset delay
@@ -256,13 +214,6 @@ public class Movit : MonoBehaviour
     {
         yield return new WaitForSeconds(1.8f);
         placed = false;
-    }
-
-    //Deposit NPC delay
-    IEnumerator npcDelay()
-    {
-        yield return new WaitForSeconds(0.6f);
-        byCar = true;
     }
 
     //Lag menu exit ability
