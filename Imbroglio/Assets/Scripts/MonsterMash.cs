@@ -125,7 +125,6 @@ public class MonsterMash : MonoBehaviour
                 float rando = Random.Range(0.0f, 0.9f);
                 if (hold != null) hold.GetComponent<Rigidbody>().isKinematic = false;
                 hold = Instantiate(dig, new Vector3(transform.position.x, -0.4f, transform.position.z), new Quaternion(0, rando, 0, 1 - rando)) as GameObject;
-                hold.GetComponent<Rigidbody>().isKinematic = true;
             }
 
             //Move towards path[0] until distance < 0.5, then remove point and move towards next

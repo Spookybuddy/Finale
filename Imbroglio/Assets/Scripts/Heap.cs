@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using UnityEngine;
 
+//A* code & optimizations from Sebastian Lague
 public class Heap<T> where T : IHeapItem<T> {
     T[] items;
     int count;

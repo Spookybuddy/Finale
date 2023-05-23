@@ -39,7 +39,6 @@ public class Caving : MonoBehaviour
     {
         scale = size;
         mazeData = noise;
-
         NewMesh(lengths, false);
     }
 
@@ -47,12 +46,11 @@ public class Caving : MonoBehaviour
     {
         scale = size;
         mazeData = maze;
+        NewMesh(lengths, true);
 
         //Adjust ground tile to center and scale
         tile.transform.localPosition = new Vector3((scale - 1) / 2f, 0, (scale - 1) / 2f);
         tile.transform.localScale = new Vector3((scale - 1), (scale - 1), 1);
-
-        NewMesh(lengths, true);
     }
 
     public void NewMesh(Vector2 lengths, bool use)

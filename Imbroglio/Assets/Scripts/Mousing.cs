@@ -6,19 +6,17 @@ public class Mousing : MonoBehaviour
 {
     private Movit script;
     private float tilt;
-
-    public Light lamp;
     private bool flipping;
 
+    public Light lamp;
     public float looks;
-
     public float flashBat;
     public float flashMax;
 
     void Start()
     {
         //Hide mouse (Unhide when paused/menu)
-        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
         flashMax = 45.0f;
         flashBat = flashMax;
         script = GameObject.Find("Player").GetComponent<Movit>();
@@ -27,17 +25,14 @@ public class Mousing : MonoBehaviour
     void Update()
     {
         if (!script.menuUp) {
-            //Use a sin wave to add camera bob
-            float playY = 1.8f + (Mathf.Sin(script.stepping * 3.14159f) / 10);
-
             //Get player position
             float playX = transform.position.x;
             float playZ = transform.position.z;
-            transform.position = new Vector3(playX, playY, playZ);
+            transform.position = new Vector3(playX, 2.333f, playZ);
 
             //Tilt camera on X axis (Up/Down)
-            tilt = Input.GetAxis("Mouse Y")/2;
-            looks = (3.14159f * transform.localEulerAngles.x / 60);
+            tilt = Input.GetAxis("Mouse Y") / 2;
+            looks = (3.14159265f * transform.localEulerAngles.x / 60);
 
             //Prevent looking too high/low
             if (transform.localEulerAngles.x - tilt > 30 && transform.localEulerAngles.x - tilt < 180) {

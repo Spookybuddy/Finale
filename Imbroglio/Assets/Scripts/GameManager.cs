@@ -15,9 +15,6 @@ public class GameManager : MonoBehaviour
     public TextMeshProUGUI itemDisplay;
     public TextMeshProUGUI markersPlaced;
     public TextMeshProUGUI interactPrompt;
-    public TextMeshProUGUI talkToNpc;
-    public TextMeshProUGUI npcDeposit;
-    public TextMeshProUGUI driveAway;
 
     public GameObject[] batteryLevels;
     private float battery;
@@ -33,8 +30,8 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        player = GameObject.Find("Player").GetComponent<Movit>();
-        lookat = GameObject.Find("Main Camera").GetComponent<Mousing>();
+        player = GameObject.FindWithTag("Player").GetComponent<Movit>();
+        lookat = GameObject.FindWithTag("MainCamera").GetComponent<Mousing>();
         playerAudio = GetComponent<AudioSource>();
         StartCoroutine(soundDelay(2));
     }
@@ -73,13 +70,9 @@ public class GameManager : MonoBehaviour
 
         //Display interact when in range
         interactPrompt.gameObject.SetActive(player.interactRange);
-        talkToNpc.gameObject.SetActive(player.talkingRange);
-
-        driveAway.gameObject.SetActive((player.byCar && player.numSaved > 1));
-        npcDeposit.gameObject.SetActive((player.byCar && player.numSaved < 2));
 
         //Display flashlight battery as a battery icon
-        battery = (lookat.flashBat/lookat.flashMax*100);
+        battery = (lookat.flashBat / lookat.flashMax * 100);
         if (battery > 70) {
             display = 0;
         } else if (battery > 40) {

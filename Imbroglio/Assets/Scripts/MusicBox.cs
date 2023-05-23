@@ -20,7 +20,7 @@ public class MusicBox : MonoBehaviour
         float Xdist = (player.transform.position.x - transform.position.x);
         float Zdist = (player.transform.position.z - transform.position.z);
         float volume = SquareRoot((Xdist * Xdist) + (Zdist * Zdist));
-        Xdist = Xdist / volume;
+        Xdist /= volume;
         Zdist = Mathf.Sign(Zdist) * INVERSE;
         sound.panStereo = Mathf.Cos((player.transform.eulerAngles.y - ArcSub(Xdist) * Zdist) / 90 * HALFPI);
         sound.PlayOneShot(hit, Mathf.Min(1, 4 / volume));
