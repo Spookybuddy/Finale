@@ -258,7 +258,7 @@ GameObject:
   - component: {fileID: 5464117301611548317}
   - component: {fileID: -5148516606093470145}
   m_Layer: 0
-  m_Name: bottle
+  m_Name: Bottle
   m_TagString: Throwable
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

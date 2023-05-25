@@ -20,19 +20,20 @@ public class Caving : MonoBehaviour
     public GameObject tile;
 
     private Mesh cave;
-    private Mesh overlay;
+    //private Mesh overlay;
     private Vector3[] VERTs;
-    private Vector3[] UERTs;
+    //private Vector3[] UERTs;
     private int[] TRIs;
-    private int[] TWOs;
+    //private int[] TWOs;
     private Vector2[] UVs;
-    private Vector2[] VVs;
+    //private Vector2[] VVs;
     private int[,] mazeData;
 
     void Start()
     {
         cave = new Mesh();
-        overlay = new Mesh();
+        //Removed overlay for now. Did not look too good. Will rework to fix issues.
+        //overlay = new Mesh();
     }
 
     public void NewCliff(int size, Vector2 lengths, int[,] noise)
@@ -57,19 +58,19 @@ public class Caving : MonoBehaviour
     {
         //Check if the mesh exists
         if (cave == null) cave = new Mesh();
-        if (overlay == null) overlay = new Mesh();
+        //if (overlay == null) overlay = new Mesh();
 
         //Verts & UVs because they are the same size
         VERTs = new Vector3[scale * scale + (scale - 1) * (scale - 1)];
-        UERTs = new Vector3[VERTs.Length];
+        //UERTs = new Vector3[VERTs.Length];
         UVs = new Vector2[VERTs.Length];
-        VVs = new Vector2[VERTs.Length];
+        //VVs = new Vector2[VERTs.Length];
         Vertex(lengths, use);
         Vertex2(use);
 
         //Tris
         TRIs = new int[(scale - 1) * (scale - 1) * 12];
-        TWOs = new int[TRIs.Length];
+        //TWOs = new int[TRIs.Length];
         for (int i = 0; i < scale - 1; i++) {
             for (int j = 0; j < scale - 1; j++) {
                 //Coords are stored W N E S C for ease of triangle creation, with N being top left
@@ -86,7 +87,7 @@ public class Caving : MonoBehaviour
 
         //Reset & Update
         AssignMesh(cave, VERTs, TRIs, UVs);
-        AssignMesh(overlay, UERTs, TWOs, VVs);
+        //AssignMesh(overlay, UERTs, TWOs, VVs);
 
         //Assign required mesh and collider if needed
         foreach (Meshes mesh in terrain) {
@@ -94,7 +95,7 @@ public class Caving : MonoBehaviour
                 mesh.filter.mesh = cave;
                 mesh.hitbox.sharedMesh = cave;
             } else {
-                mesh.filter.mesh = overlay;
+                //mesh.filter.mesh = overlay;
             }
         }
     }
@@ -186,7 +187,7 @@ public class Caving : MonoBehaviour
         TRIs[index + 1] = cardinals[(iteration + 1) % 4];
         TRIs[index + 2] = cardinals[4];
 
-        //Assign overlay UVs along raised edges. Change to check map data rather than verts
+        /* Assign overlay UVs along raised edges. Change to check map data rather than verts
         if (iteration == raised || (iteration + 1) % 4 == raised || AverageHeight(vertex) != 0) {
             VVs[cardinals[iteration]] = new Vector2(VVs[cardinals[iteration]].x, 1);
             VVs[cardinals[(iteration + 1) % 4]] = new Vector2(VVs[cardinals[(iteration + 1) % 4]].x, 1);
@@ -197,6 +198,7 @@ public class Caving : MonoBehaviour
             TWOs[index + 1] = cardinals[(iteration + 1) % 4];
             TWOs[index + 2] = cardinals[4];
         }
+        */
 
         //Recursion because I'm fancy like that
         if (iteration + 1 < 4) Triangles(index + 3, iteration + 1, cardinals, vertex);
@@ -209,9 +211,9 @@ public class Caving : MonoBehaviour
             for (int j = 0; j < scale; j++) {
                 int index = Indices(i, j);
                 VERTs[index] = new Vector3(i, use ? AverageDepth(i, j, lengths) : AverageDepth(i, j, lengths, use), j);
-                UERTs[index] = new Vector3(i, 0, j);
+                //UERTs[index] = new Vector3(i, 0, j);
                 UVs[index] = new Vector2((float)i / scale, (float)j / scale);
-                VVs[index] = new Vector2(i % 2, 0);
+                //VVs[index] = new Vector2(i % 2, 0);
             }
         }
     }
@@ -224,9 +226,9 @@ public class Caving : MonoBehaviour
                 int index = scale * (i + 1) + (scale - 1) * i + j;
                 float height = AverageDepth(index, use);
                 VERTs[index] = new Vector3(i + 0.5f, height, j + 0.5f);
-                UERTs[index] = new Vector3(i + 0.5f, 0, j + 0.5f);
+                //UERTs[index] = new Vector3(i + 0.5f, 0, j + 0.5f);
                 UVs[index] = new Vector2((i + 0.5f) / scale, (j + 0.5f) / scale);
-                VVs[index] = new Vector2(0.5f, 0);
+                //VVs[index] = new Vector2(0.5f, 0);
             }
         }
     }
