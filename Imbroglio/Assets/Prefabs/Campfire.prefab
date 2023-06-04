@@ -228,7 +228,7 @@ MeshRenderer:
   m_StaticBatchRoot: {fileID: 0}
   m_ProbeAnchor: {fileID: 0}
   m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 0.4009097
+  m_ScaleInLightmap: 0.25211045
   m_ReceiveGI: 1
   m_PreserveUVs: 0
   m_IgnoreNormalsForChartDetection: 0
@@ -419,6 +419,10 @@ PrefabInstance:
     - target: {fileID: 7652712057570742437, guid: b4b0142b643d60d4f83f26c420edcd34, type: 3}
       propertyPath: m_Name
       value: Log
+      objectReference: {fileID: 0}
+    - target: {fileID: 9134619827779168758, guid: b4b0142b643d60d4f83f26c420edcd34, type: 3}
+      propertyPath: m_ScaleInLightmap
+      value: 0.25211045
       objectReference: {fileID: 0}
     - target: {fileID: 9134619827779168758, guid: b4b0142b643d60d4f83f26c420edcd34, type: 3}
       propertyPath: m_Materials.Array.data[0]

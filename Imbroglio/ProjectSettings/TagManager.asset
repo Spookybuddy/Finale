@@ -14,6 +14,7 @@ TagManager:
   - Decor
   - Monster
   - Cave
+  - Event
   layers:
   - Default
   - TransparentFX
