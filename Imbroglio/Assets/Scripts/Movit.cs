@@ -192,6 +192,9 @@ public class Movit : MonoBehaviour
             failure = true;
             menuUp = true;
         }
+        if (collider.gameObject.CompareTag("Event")) {
+            Debug.Log("CaveInCutscene");
+        }
     }
 
     void OnTriggerStay(Collider collider)
