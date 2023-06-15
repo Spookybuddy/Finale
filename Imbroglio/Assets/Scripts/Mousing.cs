@@ -7,18 +7,10 @@ public class Mousing : MonoBehaviour
     private Movit script;
     private float tilt;
     private bool flipping;
-
-    public Light lamp;
     public float looks;
-    public float flashBat;
-    public float flashMax;
 
     void Start()
     {
-        //Hide mouse (Unhide when paused/menu)
-        Cursor.lockState = CursorLockMode.Locked;
-        flashMax = 45.0f;
-        flashBat = flashMax;
         script = GameObject.Find("Player").GetComponent<Movit>();
     }
 
@@ -42,30 +34,6 @@ public class Mousing : MonoBehaviour
             } else {
                 transform.localEulerAngles = new Vector3(transform.localEulerAngles.x - tilt, transform.localEulerAngles.y, 0);
             }
-
-            //Flashlight
-            if (Input.GetKeyDown(KeyCode.F) && !flipping) {
-                //play flashlight click noise
-                script.playerSoundLevel = 0.8f;
-                flipping = true;
-                lamp.gameObject.SetActive(!lamp.gameObject.activeSelf);
-                StartCoroutine(flash());
-            }
-
-            //Drain flashlight battery
-            if (lamp.gameObject.activeSelf && flashBat > 0) {
-                flashBat = flashBat - Time.deltaTime / flashMax * 2.5f;
-            }
-
-            //Brightness decreases with battery
-            lamp.intensity = 2.5f * flashBat / flashMax;
         }
-    }
-
-    //Flashlight on/off delay
-    IEnumerator flash()
-    {
-        yield return new WaitForSeconds(0.7f);
-        flipping = false;
     }
 }

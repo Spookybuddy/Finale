@@ -1,10 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class Movit : MonoBehaviour
 {
+    //Holy shit please reorganize these variables
+    //Screenshake should only affect camera
+    //Menuing should be moved to gamemanger & UI buttons - That will free up a lot of space
     private float turn;
     private float strafe;
     private float advance;
@@ -21,94 +23,63 @@ public class Movit : MonoBehaviour
 
     private bool yeetIt;
     private bool placed;
-    private bool menuLag;
+    public Light lamp;
+    private bool flipping;
+    public float flashBat;
+    public float flashMax;
 
     public bool menuUp;
     public bool paused;
-    public bool confirm;
     public bool victory;
     public bool failure;
-    public bool mainMenu;
-    public bool storyMenu;
 
     public bool interactRange;
+    public Vector3 entrance;
+    public AnimationCurve curve;
     private bool inCave;
+    private bool caveIn;
+    private bool collapseTriggered;
+    private bool disabled;
+    private float shakeMonster;
+    private float monsterDistance;
     private Vector3 markPoint;
 
     private Mousing lookingAt;
     private MonsterMash monster;
+    private GameManager manager;
+    private Transform monsterPos;
 
     public float playerSoundLevel;
 
     void Start()
     {
         lookingAt = GameObject.FindWithTag("MainCamera").GetComponent<Mousing>();
-        monster = GameObject.FindWithTag("Monster").GetComponent<MonsterMash>();
+        monsterPos = GameObject.FindWithTag("Monster").transform;
+        monster = monsterPos.gameObject.GetComponent<MonsterMash>();
+        manager = GameObject.FindWithTag("GameController").GetComponent<GameManager>();
         rigid = GetComponent<Rigidbody>();
         yeetIt = true;
         placed = false;
         markers = 0;
         menuUp = true;
-        mainMenu = true;
-        storyMenu = false;
-        paused = false;
-        confirm = false;
-        menuLag = false;
-        victory = false;
-        failure = false;
+        caveIn = false;
+        collapseTriggered = false;
+        disabled = false;
         playerSoundLevel = 0.0f;
+        flashBat = flashMax;
     }
 
     void Update()
     {
-        //Main menu
-        if (mainMenu) {
-            if (Input.GetKeyDown(KeyCode.Return)) {
-                mainMenu = false;
-                storyMenu = true;
-            } else if (Input.GetKey(KeyCode.Q) && Input.GetKey(KeyCode.E)) {
-                Debug.Log("Quit");
-                Application.Quit();
-            }
-        } else if (storyMenu) {
-            //Display objective text after beginning
-            if (Input.GetKeyDown(KeyCode.Escape)) {
-                storyMenu = false;
-                menuUp = false;
-            }
-        } else if (failure || victory) {
-            //Escape on failure/victory reloads scene
-            if (Input.GetKeyDown(KeyCode.Escape)) {
-                SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-            }
-        } else if (confirm) {
-            if (Input.GetKeyDown(KeyCode.Return) && !menuLag) {
-                SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-            }
-            if (Input.GetKeyDown(KeyCode.Escape)) {
-                confirm = false;
-                paused = true;
-                menuUp = true;
-            }
-        } else if (paused) {
-            //Quit to main via Enter with confirmation message
-            if (Input.GetKeyDown(KeyCode.Return)) {
-                menuLag = true;
-                StartCoroutine(menuDelay());
-                paused = false;
-                confirm = true;
-            }
-            //Unpause via Escape
-            if (Input.GetKeyDown(KeyCode.Escape)) {
-                paused = false;
-                menuUp = false;
-            }
-        } else if (Input.GetKeyDown(KeyCode.Escape)) {
-            paused = true;
-            menuUp = true;
+        //Cave in cutscene: Forced look at entrance
+        if (disabled && !caveIn) {
+            Vector3 target = (entrance - transform.position).normalized;
+            Quaternion rotato = Quaternion.LookRotation(target);
+            transform.rotation = Quaternion.Slerp(transform.rotation, rotato, Time.deltaTime * 4);
         }
 
-        if (!menuUp) {
+        //Controllable
+        if (!menuUp && !disabled) {
             //Mouse Camera (Left/Right)
             turn = Input.GetAxis("Mouse X") / 2;
             transform.Rotate(Vector3.up, turn);
@@ -162,6 +133,33 @@ public class Movit : MonoBehaviour
                 menuUp = true;
             }
 
+            //Pause
+            if (Input.GetKeyDown(KeyCode.Escape)) {
+                menuUp = true;
+                manager.MenuState(2);
+            }
+
+            //Flashlight
+            if (Input.GetKeyDown(KeyCode.F) && !flipping) {
+                flipping = true;
+                lamp.gameObject.SetActive(!lamp.gameObject.activeSelf);
+                StartCoroutine(flash());
+            }
+
+            //Drain flashlight battery, and the intensity does as well
+            if (lamp.gameObject.activeSelf && flashBat > 0) {
+                flashBat = flashBat - Time.deltaTime / flashMax * 2.5f;
+                lamp.intensity = 2.5f * flashBat / flashMax;
+            }
+
+            //Screenshake when close to worm - FIX
+            monsterDistance = (monsterPos.position - transform.position).magnitude;
+            if (monsterDistance < 64) {
+                shakeMonster = (80 - monsterDistance) * 0.003125f;
+            } else {
+                shakeMonster = 0;
+            }
+
             //Interact with environment
             if (Input.GetKeyDown(KeyCode.E) || Input.GetAxis("Interact") > 0) {
                 GameObject[] throwables = GameObject.FindGameObjectsWithTag("Throwable");
@@ -176,7 +174,7 @@ public class Movit : MonoBehaviour
         }
     }
 
-    //Check if in cave
+    //Raycast above player to detect when in cave
     void FixedUpdate()
     {
         if (Physics.Raycast(transform.position, Vector3.up, out RaycastHit hit, 4)) {
@@ -185,23 +183,26 @@ public class Movit : MonoBehaviour
         } else { inCave = false; }
     }
 
-    //Eaten by worm
+    //Event triggers & Worm
     void OnTriggerEnter(Collider collider)
     {
         if (collider.gameObject.CompareTag("Worm")) {
-            failure = true;
             menuUp = true;
+            manager.MenuState(2);
         }
-        if (collider.gameObject.CompareTag("Event")) {
-            Debug.Log("CaveInCutscene");
+        if (collider.gameObject.CompareTag("Event") && !collapseTriggered) {
+            collapseTriggered = true;
+            StartCoroutine(caveRumble(1));
+            StartCoroutine(caveCollapse());
         }
     }
 
+    //Backup for worm bite
     void OnTriggerStay(Collider collider)
     {
         if (collider.gameObject.CompareTag("Worm")) {
-            failure = true;
             menuUp = true;
+            manager.MenuState(2);
         }
     }
 
@@ -219,10 +220,33 @@ public class Movit : MonoBehaviour
         placed = false;
     }
 
-    //Lag menu exit ability
-    IEnumerator menuDelay()
+    //Flashlight on/off delay
+    IEnumerator flash()
     {
-        yield return new WaitForSeconds(0.25f);
-        menuLag = false;
+        yield return new WaitForSeconds(0.7f);
+        flipping = false;
+    }
+
+    IEnumerator caveRumble(float duration)
+    {
+        //Screenshake over X sec
+        Vector3 start = transform.position;
+        float elapsed = 0;
+
+        while (elapsed < duration) {
+            elapsed += Time.deltaTime;
+            transform.position = start + Random.insideUnitSphere * curve.Evaluate(elapsed / duration);
+            yield return null;
+        }
+        monster.BeginHunt();
+        transform.position = start;
+        disabled = true;
+    }
+
+    IEnumerator caveCollapse()
+    {
+        yield return new WaitForSeconds(6);
+        disabled = false;
+        caveIn = true;
     }
 }
