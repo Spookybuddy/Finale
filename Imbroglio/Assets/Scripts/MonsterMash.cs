@@ -43,23 +43,12 @@ public class MonsterMash : MonoBehaviour
         sounds = GetComponent<AudioSource>();
         attacking = false;
         health = 91;
-        StartCoroutine(noises());
+        StartCoroutine(Noises());
         last = Vector3.zero;
     }
 
     void Update()
     {
-        //Path finding test - Seems to work
-        //Set trigger box at entry to begin wandering
-        if (Input.GetKeyDown(KeyCode.G)) {
-            FindPath(mazePoint(transform.position), mazePoint(tracking.transform.position));
-            line.positionCount = path.Count;
-            line.SetPositions(path.ToArray());
-        }
-
-        //Attack Debug
-        if (Input.GetKeyDown(KeyCode.T)) Instantiate(worm, new Vector3(35, -5, 0), transform.rotation);
-
         //Stop when killed
         if (health <= 0) move = false;
 
@@ -106,7 +95,7 @@ public class MonsterMash : MonoBehaviour
             //Attack here
             if (attacking) {
                 move = false;
-                StartCoroutine(attackDuration());
+                StartCoroutine(AttackDuration());
             } else { move = true; }
 
             //Play constant audio out of 3 growls
@@ -116,7 +105,7 @@ public class MonsterMash : MonoBehaviour
                 sounds.pitch = (Random.Range(0.875f, 1.125f));
                 sounds.PlayOneShot(growls[Random.Range(0, growls.Length)], Mathf.Clamp01(12 / toPlayer - 0.15f));
                 doNoise = false;
-                StartCoroutine(noises());
+                StartCoroutine(Noises());
             }
 
             //Digging effect
@@ -133,7 +122,7 @@ public class MonsterMash : MonoBehaviour
                 if (Vector3.Distance(transform.position, path[0]) < 0.5f) {
                     path.RemoveAt(0);
                     //If list is now empty, recalculate pathing
-                    if (path.Count == 0) FindPath(mazePoint(transform.position), mazePoint(goTowards));
+                    if (path.Count == 0) FindPath(MazePoint(transform.position), MazePoint(goTowards));
                 }
             }
         } else {
@@ -156,7 +145,7 @@ public class MonsterMash : MonoBehaviour
 
         //Update the player position when hunting
         if (move && hunting) {
-            FindPath(mazePoint(transform.position), mazePoint(goTowards));
+            FindPath(MazePoint(transform.position), MazePoint(goTowards));
         }
     }
 
@@ -219,7 +208,7 @@ public class MonsterMash : MonoBehaviour
     }
 
     //Convert given positions into maze point when within bounds
-    private Node mazePoint(Vector3 position)
+    private Node MazePoint(Vector3 position)
     {
         int x = Mathf.RoundToInt(position.x / 2 + (scale.x * (size - 1)) / 2 + 72);
         int y = Mathf.RoundToInt(position.z / 2 + (scale.y * (size - 1)) / 2);
@@ -270,12 +259,20 @@ public class MonsterMash : MonoBehaviour
             hunting = false;
             searching = true;
             goTowards = pos;
-            FindPath(mazePoint(transform.position), mazePoint(goTowards));
+            FindPath(MazePoint(transform.position), MazePoint(goTowards));
         }
     }
 
+    //Start monster hunt
+    public void BeginHunt()
+    {
+        FindPath(MazePoint(transform.position), MazePoint(tracking.transform.position));
+        line.positionCount = path.Count;
+        line.SetPositions(path.ToArray());
+    }
+
     //Attack animation
-    IEnumerator attackDuration()
+    IEnumerator AttackDuration()
     {
         yield return new WaitForSeconds(1.5f);
         attacking = false;
@@ -283,7 +280,7 @@ public class MonsterMash : MonoBehaviour
     }
 
     //Growling spacing
-    IEnumerator noises()
+    IEnumerator Noises()
     {
         yield return new WaitForSeconds(2.75f);
         doNoise = true;
