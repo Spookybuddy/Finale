@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 2725156899435700631}
   - component: {fileID: 210142007223072558}
   - component: {fileID: 4225549949446906194}
-  m_Layer: 0
+  m_Layer: 4
   m_Name: Bottle_LOD0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -95,7 +95,7 @@ GameObject:
   - component: {fileID: 2021147620496942878}
   - component: {fileID: 3699829296526890904}
   - component: {fileID: 4611921264206384954}
-  m_Layer: 0
+  m_Layer: 4
   m_Name: bottle
   m_TagString: Throwable
   m_Icon: {fileID: 0}
@@ -307,7 +307,7 @@ GameObject:
   - component: {fileID: 1741488936097957812}
   - component: {fileID: 5227596856028059338}
   - component: {fileID: 1000703551597704399}
-  m_Layer: 0
+  m_Layer: 4
   m_Name: Bottle_LOD2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -388,7 +388,7 @@ GameObject:
   - component: {fileID: 3316591820926202599}
   - component: {fileID: 3127783288513741397}
   - component: {fileID: 1315896704296961196}
-  m_Layer: 0
+  m_Layer: 4
   m_Name: Bottle_LOD1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -469,7 +469,7 @@ GameObject:
   - component: {fileID: 3899857256759170800}
   - component: {fileID: 2906497352051373696}
   - component: {fileID: 8261124552626848414}
-  m_Layer: 0
+  m_Layer: 4
   m_Name: Bottle_LOD3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
