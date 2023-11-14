@@ -30,12 +30,13 @@ public class Movit : MonoBehaviour
 
     public bool menuUp;
     public bool paused;
-    public bool victory;
-    public bool failure;
 
     public bool interactRange;
     public Vector3 entrance;
     public AnimationCurve curve;
+    public GameObject boulder;
+    public GameObject bloackade;
+    public int collapseHealth;
     private bool inCave;
     private bool caveIn;
     private bool collapseTriggered;
@@ -67,6 +68,7 @@ public class Movit : MonoBehaviour
         disabled = false;
         playerSoundLevel = 0.0f;
         flashBat = flashMax;
+        collapseHealth = 505;
     }
 
     void Update()
@@ -129,7 +131,6 @@ public class Movit : MonoBehaviour
 
             //Victory if worm is dead
             if (monster.health <= 0) {
-                victory = true;
                 menuUp = true;
             }
 
@@ -188,12 +189,14 @@ public class Movit : MonoBehaviour
     {
         if (collider.gameObject.CompareTag("Worm")) {
             menuUp = true;
-            manager.MenuState(2);
+            manager.MenuState(5);
         }
         if (collider.gameObject.CompareTag("Event") && !collapseTriggered) {
             collapseTriggered = true;
+            bloackade.SetActive(true);
             StartCoroutine(caveRumble(1));
             StartCoroutine(caveCollapse());
+            StartCoroutine(caveBoulder(9));
         }
     }
 
@@ -202,7 +205,7 @@ public class Movit : MonoBehaviour
     {
         if (collider.gameObject.CompareTag("Worm")) {
             menuUp = true;
-            manager.MenuState(2);
+            manager.MenuState(5);
         }
     }
 
@@ -227,9 +230,10 @@ public class Movit : MonoBehaviour
         flipping = false;
     }
 
+    //Screenshake over X seconds
     IEnumerator caveRumble(float duration)
     {
-        //Screenshake over X sec
+        bloackade.SetActive(true);
         Vector3 start = transform.position;
         float elapsed = 0;
 
@@ -243,10 +247,19 @@ public class Movit : MonoBehaviour
         disabled = true;
     }
 
+    //Cutscene
     IEnumerator caveCollapse()
     {
         yield return new WaitForSeconds(6);
         disabled = false;
         caveIn = true;
+    }
+
+    //Spawn boulders recursively
+    IEnumerator caveBoulder(int amt)
+    {
+        yield return new WaitForSeconds(0.1f);
+        Instantiate(boulder, entrance + (Random.insideUnitSphere * 3), Random.rotation);
+        if (amt > 0) StartCoroutine(caveBoulder(amt - 1));
     }
 }

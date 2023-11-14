@@ -6,7 +6,6 @@ public class Mousing : MonoBehaviour
 {
     private Movit script;
     private float tilt;
-    private bool flipping;
     public float looks;
 
     void Start()

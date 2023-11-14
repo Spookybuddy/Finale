@@ -55,10 +55,10 @@ public class MonsterMash : MonoBehaviour
         if (!player.menuUp && health > 0) {
             //Movement type speeds
             if (hunting) {
-                spd = 9;
+                spd = 10;
                 goTowards = tracking.transform.position;
             } else if (searching) {
-                spd = 5;
+                spd = 6;
             } else {
                 spd = 3;
             }

@@ -94,6 +94,9 @@ public class ThrownItem : MonoBehaviour
     //Check to see if hit worm after being thrown
     void OnTriggerEnter(Collider other)
     {
+        if (other.CompareTag("Wall")) {
+            Debug.Log("Hurt the wall");
+        }
         if (other.gameObject.CompareTag("Worm") && gameObject.CompareTag("Thrown")) {
             tremor.health = tremor.health - (breakable ? 13 : 7);
         }
